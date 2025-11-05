@@ -36,6 +36,9 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
     const planeMarkerRef = useRef(null);
     const routeLayerRef = useRef(null);
     const visitedLayerRef = useRef(null);
+    const currentSegmentRef = useRef(null); // Reference for current active segment
+    const staticSegmentsRef = useRef(null); // Reference for future static segments
+  const visitedIdsRef = useRef(new Set()); // Dedup: prevent multiple "visited" renders
     
     // Flight tracking state
     const [followPlane, setFollowPlane] = useState(true);
@@ -118,11 +121,13 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
       setRemainingPois(valid);
       setCurrentTargetIndex(0);
       setCompletedSegments([]);
+      // Reset visited IDs when the POI list changes
+      if (visitedIdsRef.current) visitedIdsRef.current.clear();
     }, [pois]);
 
     /**
      * Calculate and draw optimal route from current position to all remaining POIs
-     * Updates route visualization on map
+     * Updates route visualization on map with independent segments
      */
     useEffect(() => {
       if (!mapRef.current) return;
@@ -145,7 +150,9 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
       // Clear route if no POIs remaining
       if (!remainingPois || remainingPois.length === 0) {
         setOrderedRoute([]);
-        if (routeLayerRef.current) routeLayerRef.current.clearLayers();
+        if (currentSegmentRef.current) currentSegmentRef.current.clearLayers();
+        if (staticSegmentsRef.current) staticSegmentsRef.current.clearLayers();
+        if (visitedIdsRef.current) visitedIdsRef.current.clear();
         return;
       }
 
@@ -155,26 +162,38 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
       setCurrentTargetIndex(0);
 
       // Create layer groups if they don't exist
-      if (!routeLayerRef.current) routeLayerRef.current = L.layerGroup().addTo(mapRef.current);
       if (!visitedLayerRef.current) visitedLayerRef.current = L.layerGroup().addTo(mapRef.current);
+      if (!currentSegmentRef.current) currentSegmentRef.current = L.layerGroup().addTo(mapRef.current);
+      if (!staticSegmentsRef.current) staticSegmentsRef.current = L.layerGroup().addTo(mapRef.current);
       
-      const layer = routeLayerRef.current;
-      layer.clearLayers();
+      // Clear previous segments
+      currentSegmentRef.current.clearLayers();
+      staticSegmentsRef.current.clearLayers();
 
-      // Draw route polyline
-      const coords = [[start.lat, start.lon], ...ordered.map(p => [p.lat, p.lon])];
-      const poly = L.polyline(coords, {
-        color: palette?.accent || "#00bcd4",
-        weight: 3,
-        opacity: 0.9,
-        smoothFactor: 1,
-        noClip: true
-      });
-      layer.addLayer(poly);
+      // Draw static segments between POIs (not including first segment from plane)
+      if (ordered.length > 1) {
+        for (let i = 0; i < ordered.length - 1; i++) {
+          const from = ordered[i];
+          const to = ordered[i + 1];
+          const staticSegment = L.polyline(
+            [[from.lat, from.lon], [to.lat, to.lon]], 
+            {
+              color: "#006b4a",
+              weight: 5,
+              opacity: 0.8,
+              smoothFactor: 1,
+              noClip: true,
+              dashArray: '10, 10' // Dashed line for future segments
+            }
+          );
+          staticSegmentsRef.current.addLayer(staticSegment);
+        }
+      }
 
       // Fit map bounds to show entire route
-      if (coords.length > 1) {
+      if (ordered.length > 0) {
         try {
+          const coords = [[start.lat, start.lon], ...ordered.map(p => [p.lat, p.lon])];
           const bounds = L.latLngBounds(coords);
           mapRef.current.fitBounds(bounds, { padding: [60, 60] });
         } catch (e) {}
@@ -182,8 +201,8 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
     }, [remainingPois, nearestNeighborOrder, userCoords]);
 
     /**
-     * Monitor plane position and mark POIs as visited when within threshold
-     * Updates visited route segments with red color
+     * Monitor plane position, update current segment in real-time, and mark POIs as visited
+     * Updates only the active segment between plane and next POI
      * Checks every second for proximity to target POI
      */
     useEffect(() => {
@@ -197,12 +216,30 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
 
         const planeLatLng = planeMarkerRef.current.getLatLng();
         if (!planeLatLng) return;
+
+        // Update current segment in real-time
+        if (currentSegmentRef.current) {
+          currentSegmentRef.current.clearLayers();
+          const currentSegment = L.polyline(
+            [[planeLatLng.lat, planeLatLng.lng], [target.lat, target.lon]], 
+            {
+              color: palette?.accent || "#00bcd4",
+              weight: 3,
+              opacity: 0.9,
+              smoothFactor: 1,
+              noClip: true
+            }
+          );
+          currentSegmentRef.current.addLayer(currentSegment);
+        }
         
         const distKm = haversine(planeLatLng.lat, planeLatLng.lng, target.lat, target.lon);
         const thresholdKm = 0.2; // 200 meters threshold
 
-        // Mark as visited if within threshold
-        if (distKm <= thresholdKm) {
+        // Mark as visited if within threshold (guard against duplicate handling)
+        if (distKm <= thresholdKm && !visitedIdsRef.current.has(target.id)) {
+          // Record that we already processed this target
+          visitedIdsRef.current.add(target.id);
           const planePos = planeMarkerRef.current.getLatLng();
           const targetPos = [target.lat, target.lon];
           
@@ -217,6 +254,33 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
           
           if (visitedLayerRef.current) {
             visitedLayerRef.current.addLayer(completedSegment);
+          }
+
+          // Clear current segment as it's now completed
+          if (currentSegmentRef.current) {
+            currentSegmentRef.current.clearLayers();
+          }
+
+          // Remove the first static segment if it exists (the one we just completed to)
+          if (staticSegmentsRef.current && orderedRoute.length > 1) {
+            staticSegmentsRef.current.clearLayers();
+            // Redraw remaining static segments
+            for (let i = 1; i < orderedRoute.length - 1; i++) {
+              const from = orderedRoute[i];
+              const to = orderedRoute[i + 1];
+              const staticSegment = L.polyline(
+                [[from.lat, from.lon], [to.lat, to.lon]], 
+                {
+                  color: "#006b4a",
+                  weight: 5,
+                  opacity: 0.8,
+                  smoothFactor: 1,
+                  noClip: true,
+                  dashArray: '10, 10'
+                }
+              );
+              staticSegmentsRef.current.addLayer(staticSegment);
+            }
           }
           
           setCompletedSegments(prev => [...prev, { 
@@ -332,7 +396,7 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             className: "plane-icon",
             html: `
                 <svg viewBox="0 0 64 64" class="plane-svg" width="40" height="40">
-                    <path fill="${palette?.accent || "#00bcd4"}" d="M30 4 L34 4 L36 22 L56 28 L56 32 L36 34 L34 60 L30 60 L28 34 L8 32 L8 28 L28 22 Z"/>
+                    <path fill="#006b4a" d="M30 4 L34 4 L36 22 L56 28 L56 32 L36 34 L34 60 L30 60 L28 34 L8 32 L8 28 L28 22 Z"/>
                     <circle cx="32" cy="10" r="3" fill="#e6f9fc"/>
                 </svg>`,
             iconSize: [40, 40],
@@ -452,6 +516,8 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             poiLayerRef.current = null;
             planeMarkerRef.current = null;
             visitedLayerRef.current = null;
+            currentSegmentRef.current = null;
+            staticSegmentsRef.current = null;
         };
     }, [fetchPoisAroundPlane]);
 
