@@ -26,7 +26,7 @@ export default function App() {
     <Box 
       sx={{ 
         alignSelf: "flex-start", 
-        height: "auto", 
+        height: "100vh", 
         display: "flex", 
         flexDirection: "column", 
         bgcolor: palette.background, 
@@ -37,15 +37,24 @@ export default function App() {
       <TopBar />
       
       {/* Main Content Grid: Sidebar + Map */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "400px 1fr", minHeight: 0 }}>
+      <Box sx={{ 
+        display: "grid", 
+        gridTemplateColumns: "400px 1fr", 
+        flex: 1,
+        minHeight: 0,
+        overflow: "hidden"
+      }}>
         
         {/* Left Sidebar: Search Panel and POI List */}
         <Box 
           sx={{ 
-            overflowY: "auto", 
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
             p: 2, 
             borderRight: `1px solid ${palette.divider}`, 
-            bgcolor: palette.dark 
+            bgcolor: palette.dark,
+            overflow: "hidden"
           }}
         >
           {/* Search Panel - Currently commented out */}

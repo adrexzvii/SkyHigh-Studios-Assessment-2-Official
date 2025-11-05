@@ -24,7 +24,36 @@ export default function PoiList({ pois, setSelectedPoi }) {
   }
 
   return (
-    <List>
+    <List 
+      sx={{ 
+        width: "100%", 
+        p: 0,
+        maxHeight: "calc(100vh - 130px)", // Height calculation: viewport - topbar - padding
+        overflowY: "scroll",
+        overflowX: "hidden",
+        // Custom scrollbar for Webkit browsers
+        "&::-webkit-scrollbar": {
+          width: "12px",
+        },
+        "&::-webkit-scrollbar-track": {
+          backgroundColor: palette.dark,
+          borderRadius: "6px",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: palette.accent,
+          borderRadius: "6px",
+          border: `2px solid ${palette.dark}`,
+          "&:hover": {
+            backgroundColor: palette.textSecondary,
+          },
+        },
+        // Firefox scrollbar
+        scrollbarWidth: "thin",
+        scrollbarColor: `${palette.accent} ${palette.dark}`,
+        // Fallback for non-supporting browsers
+        msOverflowStyle: "auto", // IE and Edge fallback
+      }}
+    >
       {pois.map((poi) => (
         <ListItemButton
           key={poi.pageid}
