@@ -143,8 +143,11 @@ export default function MapPopupWikipedia({ poi, userCoords, onFocusPoi }) {
         left: 0,
         zIndex: 10,
         width: 250,
+        maxHeight: "30rem",
         boxShadow: 6,
         borderRadius: 2,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {/* POI Image */}
@@ -154,10 +157,28 @@ export default function MapPopupWikipedia({ poi, userCoords, onFocusPoi }) {
           height="140"
           image={details?.thumbnail?.source || poi.image}
           alt={poiTitle}
+          sx={{ flexShrink: 0 }}
         />
       )}
 
-      <CardContent>
+      <CardContent sx={{ 
+        flexGrow: 1, 
+        overflowY: "auto",
+        "&::-webkit-scrollbar": {
+          width: "8px",
+        },
+        "&::-webkit-scrollbar-track": {
+          backgroundColor: "rgba(0,0,0,0.1)",
+          borderRadius: "4px",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "rgba(0,0,0,0.3)",
+          borderRadius: "4px",
+          "&:hover": {
+            backgroundColor: "rgba(0,0,0,0.5)",
+          },
+        },
+      }}>
         {/* Header with title and minimize button */}
         <Box
           sx={{
