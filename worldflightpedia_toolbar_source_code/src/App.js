@@ -1,9 +1,18 @@
 import React from "react";
+import POIExplorer from "./components/POIExplorer";
 
 export default function App() {
   return (
-    <div>
-      <h1>WorldFlightPedia Toolbar</h1>
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        margin: 0,
+        padding: 0,
+        overflow: "hidden"
+      }}
+    >
+      <POIExplorer />
     </div>
   );
 }
