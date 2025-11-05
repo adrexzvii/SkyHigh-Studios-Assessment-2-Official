@@ -70,6 +70,13 @@ export default function MapPopupWikipedia({ poi, userCoords, onFocusPoi }) {
       (typeof poi === "string" ? poi : null)
     )) || "Unnamed location";
 
+  // Restore minimized state when a new POI is selected
+  useEffect(() => {
+    if (poi) {
+      setMinimized(false);
+    }
+  }, [poi]);
+
   // Fetch Wikipedia details and calculate distance
   useEffect(() => {
     if (!poi) return;
@@ -229,7 +236,8 @@ export default function MapPopupWikipedia({ poi, userCoords, onFocusPoi }) {
                 size="small"
                 variant="contained"
                 onClick={() => { 
-                  if (typeof onFocusPoi === "function") onFocusPoi(poi); 
+                  if (typeof onFocusPoi === "function") onFocusPoi(poi);
+                  setMinimized(true); // Minimize popup when viewing on map
                 }}
                 sx={{ mt: 1 }}
               >

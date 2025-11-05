@@ -259,8 +259,9 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
                 updateFollowButtonRef.current();
             }
             
-            // Center map on POI
-            mapRef.current.setView([poi.lat, poi.lon], 16, {
+            // Center map on POI with maximum zoom (18 is Leaflet's default max zoom)
+            const maxZoom = mapRef.current.getMaxZoom() || 18;
+            mapRef.current.setView([poi.lat, poi.lon], maxZoom, {
                 animate: true,
                 duration: 1
             });
@@ -505,35 +506,33 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
         const layer = poiLayerRef.current;
         layer.clearLayers();
 
-        // Create POI marker icon
-        const poiIcon = L.divIcon({
+        // Create POI marker icons - Normal and selected states
+        const createPoiIcon = (isSelected = false) => L.divIcon({
             className: "poi-icon",
-            html: `<svg viewBox="0 0 24 24" width="24" height="24" fill="${palette?.accent || "#00b894"}"><circle cx="12" cy="12" r="10"/></svg>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
+            html: `
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="${isSelected ? '#a80000ff' : '#006b4a'}">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+            `,
+            iconSize: [32, 32],
+            iconAnchor: [16, 32], // Anchor at the bottom point of the pin
         });
+
+        const normalIcon = createPoiIcon(false);
+        const selectedIcon = createPoiIcon(true);
 
         // Add marker for each POI
         pois.forEach((poi) => {
             if (typeof poi.lat !== "number" || typeof poi.lon !== "number") return;
 
-            const marker = L.marker([poi.lat, poi.lon], { icon: poiIcon });
+            // Check if this POI is currently selected
+            const isSelected = selectedPoi && selectedPoi.pageid === poi.pageid;
+            const marker = L.marker([poi.lat, poi.lon], { 
+                icon: isSelected ? selectedIcon : normalIcon 
+            });
 
-            // Create popup content with sanitized HTML
-            const title = (poi.title || poi.name || "").toString().replace(/</g, "&lt;");
-            const desc = poi.description ? poi.description.toString().replace(/</g, "&lt;") : "";
-            const popupContent = `
-                <div class="poi-popup">
-                    <strong>${title}</strong>
-                    ${desc ? `<div class="poi-desc">${desc}</div>` : ""}
-                </div>
-            `;
-
-            marker.bindPopup(popupContent, { maxWidth: 320, keepInView: true, autoClose: true });
-
-            // Handle marker click - select POI and open popup
+            // Handle marker click - select POI and open Wikipedia popup
             marker.on("click", () => {
-                marker.openPopup();
                 if (typeof setSelectedPoi === "function") setSelectedPoi(poi);
             });
 
@@ -549,7 +548,7 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
         return () => {
             if (layer) layer.clearLayers();
         };
-    }, [pois, setSelectedPoi]);
+    }, [pois, setSelectedPoi, selectedPoi]);
 
     return (
         <Box sx={{ 

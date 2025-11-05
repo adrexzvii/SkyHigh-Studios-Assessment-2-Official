@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
+import { List, ListItemButton, ListItemText, Typography, Box } from "@mui/material";
 import palette from "../theme/palette";
 
 export default function PoiList({ pois, setSelectedPoi }) {
@@ -24,11 +24,27 @@ export default function PoiList({ pois, setSelectedPoi }) {
   }
 
   return (
-    <List 
+    <Box sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
+      {/* POI Counter */}
+      <Typography 
+        variant="subtitle1" 
+        sx={{ 
+          mb: 2, 
+          fontWeight: 600,
+          color: palette.textPrimary,
+          borderBottom: `2px solid ${palette.accent}`,
+          pb: 1
+        }}
+      >
+        POIs Found: {pois.length}
+      </Typography>
+
+      {/* POI List */}
+      <List 
       sx={{ 
         width: "100%", 
         p: 0,
-        maxHeight: "calc(100vh - 130px)", // Height calculation: viewport - topbar - padding
+        maxHeight: "calc(100vh - 190px)", // Height calculation: viewport - topbar - padding
         overflowY: "scroll",
         overflowX: "hidden",
         // Custom scrollbar for Webkit browsers
@@ -75,5 +91,6 @@ export default function PoiList({ pois, setSelectedPoi }) {
         </ListItemButton>
       ))}
     </List>
+    </Box>
   );
 }
