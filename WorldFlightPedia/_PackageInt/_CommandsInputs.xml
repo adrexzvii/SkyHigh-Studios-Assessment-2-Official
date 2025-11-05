@@ -1,0 +1,13 @@
+<CommandsInputs>
+	<File Path="D:\SkyHigh-Studios-Assessment-2-Official\WorldFlightPedia\PackageSources\InGamePanels\worldflightpedia-toolbar.xml" Failure="0">
+		<Package Name="adriantest2-worldflightpedia" Failure="0">
+			<AssetGroup Name="worldFlightPedia-toolbar"/>
+		</Package>
+	</File>
+	<File Path="D:\SkyHigh-Studios-Assessment-2-Official\WorldFlightPedia\PackageDefinitions\adriantest2-worldflightpedia\ContentInfo\Thumbnail.jpg" Failure="0">
+		<Package Name="adriantest2-worldflightpedia" Failure="0">
+			<AssetGroup Name="ContentInfo"/>
+		</Package>
+	</File>
+</CommandsInputs>
+

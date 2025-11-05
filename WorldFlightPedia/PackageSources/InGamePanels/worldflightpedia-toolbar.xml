@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SimBase.Document Type="InGamePanels" version="1.0">
+    <Filename>worldflightpedia-toolbar.spb</Filename>
+    <InGamePanels.InGamePanelDefinition
+        id="PANEL_skyhigh-studios"
+        Name="World Flight Pedia"
+        url="html_ui/InGamePanels/worldflightpedia-toolbar/index.html"
+        resizeDirections="both"
+        minWidth="56px"
+        minHeight="65px"
+        defaultWidth="66px"
+        defaultHeight="65px"
+        defaultTop="10px"
+        defaultRight="50px"
+        icon="ICON_TOOLBAR"
+        buttonVisible="true"
+    >
+    </InGamePanels.InGamePanelDefinition>
+</SimBase.Document>
