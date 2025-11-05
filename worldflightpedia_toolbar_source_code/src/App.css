@@ -1,9 +1,17 @@
+﻿/**
+ * App.css - Application-specific styles
+ * 
+ * Component-specific styling for the main application layout.
+ */
+
+/* Map container - full width and height */
 #map {
   height: 100%;
   width: 100%;
 }
 
-.app{
+/* Main app container - flexible height */
+.app {
   height: auto;
   width: 100%;
 }

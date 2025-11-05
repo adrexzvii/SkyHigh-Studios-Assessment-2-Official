@@ -1,32 +1,39 @@
-/* ...existing code... */
+﻿/**
+ * index.css - Global Application Styles
+ * 
+ * Core styles for the application including:
+ * - Base reset and box-sizing
+ * - Leaflet map container and popup styling
+ * - POI icon and popup customization
+ */
 
-/* Asegura que el mapa y los popups ocupen/estén por encima */
+/* Ensures map and popups render correctly */
 html, body, #root {
-  /* height: 100%; */
   margin: 0;
-  /* display: flex;
-  flex-direction: column; */
 }
 
-/* Si otros componentes MUI están encima, forzamos el z-index del pane de popups */
+/* Force z-index for Leaflet popup pane to ensure popups appear above other UI elements */
 .leaflet-container .leaflet-popup-pane {
   z-index: 4000 !important;
 }
 
-/* Asegura que el contenedor del mapa tenga altura si no lo tienes ya */
-/* .leaflet-container {
-  height: 100%;
-  width: 100%;
-} */
-
-/* Opcional: estilo simple para el contenido del popup */
-.poi-popup { font-size: 14px; }
-.poi-popup .poi-desc { margin-top: 6px; color: #444; font-size: 13px; }
-
-/* asegurar que popups de leaflet queden por encima de UI */
+/* Ensure Leaflet popups stay above all UI components */
 .leaflet-popup-pane {
   z-index: 5000 !important;
 }
 
-/* estilo para iconos de POI si quieres ajustarlos */
-.poi-icon svg { display: block; }
+/* POI Popup styling */
+.poi-popup { 
+  font-size: 14px; 
+}
+
+.poi-popup .poi-desc { 
+  margin-top: 6px; 
+  color: #444; 
+  font-size: 13px; 
+}
+
+/* POI icon styling */
+.poi-icon svg { 
+  display: block; 
+}

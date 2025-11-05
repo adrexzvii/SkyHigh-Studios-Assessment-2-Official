@@ -1,3 +1,14 @@
+/**
+ * TopBar.jsx - Application Top Navigation Bar
+ * 
+ * Provides the main navigation and actions for the application:
+ * - Save/Load flight plans
+ * - Help dialog
+ * - Integration with Microsoft Flight Simulator (MSFS) Coherent engine
+ * 
+ * @component
+ */
+
 import React from 'react';
 import { 
     Box, 
@@ -21,47 +32,61 @@ import palette from '../theme/palette';
 export default function TopBar() {
     const [helpOpen, setHelpOpen] = React.useState(false);
 
+    /**
+     * Saves the current flight plan to localStorage
+     */
     const handleSaveFlightPlan = () => {
         try {
             const flightPlanData = {
-                // Add your flight plan data structure here
                 timestamp: new Date().toISOString(),
-                // ... other data
+                // Add your flight plan data structure here
             };
             
             localStorage.setItem('flightPlan', JSON.stringify(flightPlanData));
-            // Could add a success notification here
+            // Could add success notification here
         } catch (error) {
             console.error('Error saving flight plan:', error);
             // Could add error handling UI here
         }
     };
     
-const handleLoadFlightPlan = () => {
-     const path = "C:/Users/adria/Downloads/SLCBSLVR_MFS_29Oct25.pln";
-     console.log("test 1");
-    try {
-        console.log("test 1 inside");
-       const engineTrigger = engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
-        console.log("test 1 despues ask", engineTrigger);
-        Coherent.call("LOAD_FLIGHTPLAN", path)
-      .then(() => console.log("Plan cargado:", path))
-      .catch((err) => {
-        console.warn("LOAD_FLIGHTPLAN no disponible o falló:", err);
-        // 2) Fallback: abrir popup nativo Load/Save
-        engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
-      });
-  } catch (e) {
-    console.warn("Coherent no disponible aquí. Abriendo popup…", e);
-    engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
-  }
-};
+    /**
+     * Loads a flight plan - attempts to use MSFS Coherent API or opens native dialog
+     * Note: This is specific to Microsoft Flight Simulator integration
+     */
+    const handleLoadFlightPlan = () => {
+        const path = "C:/Users/adria/Downloads/SLCBSLVR_MFS_29Oct25.pln";
+        console.log("Attempting to load flight plan");
+        
+        try {
+            console.log("Inside try block");
+            const engineTrigger = engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
+            console.log("After ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN:", engineTrigger);
+            
+            // Try to load using Coherent API (MSFS specific)
+            Coherent.call("LOAD_FLIGHTPLAN", path)
+                .then(() => console.log("Flight plan loaded:", path))
+                .catch((err) => {
+                    console.warn("LOAD_FLIGHTPLAN not available or failed:", err);
+                    // Fallback: Open native Load/Save dialog
+                    engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
+                });
+        } catch (e) {
+            console.warn("Coherent not available in this environment. Opening dialog:", e);
+            engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
+        }
+    };
 
-
+    /**
+     * Opens the help dialog
+     */
     const handleHelpClick = () => {
         setHelpOpen(true);
     };
 
+    /**
+     * Closes the help dialog
+     */
     const handleCloseHelp = () => {
         setHelpOpen(false);
     };
