@@ -14,7 +14,7 @@ const ListPanel = () => {
         overflow: 'hidden'
       }}
     >
-      {/* Header del Panel de Lista */}
+      {/* Header list panel */}
       <Box
         sx={{
           padding: '16px',
@@ -31,11 +31,11 @@ const ListPanel = () => {
             gap: 1
           }}
         >
-          <span style={{ color: '#4dabf7' }}>📋</span> Panel de Lista
+          <span style={{ color: '#4dabf7' }}>📋</span> PList Panel
         </Typography>
       </Box>
 
-      {/* Contenido del panel - área scrolleable para la lista de POIs */}
+      {/* Content panel - scrollable area for the POI list */}
       <Box
         sx={{
           flex: 1,
@@ -57,7 +57,7 @@ const ListPanel = () => {
           variant="body2"
           sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
         >
-          Lista de POIs aparecerá aquí
+          POI list will appear here
         </Typography>
       </Box>
     </Box>

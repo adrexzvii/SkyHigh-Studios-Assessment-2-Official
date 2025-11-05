@@ -15,7 +15,7 @@ const Map = () => {
         overflow: 'hidden'
       }}
     >
-      {/* Placeholder para el mapa */}
+      {/* Placeholder for the map */}
       <Box
         sx={{
           textAlign: 'center',
@@ -23,14 +23,14 @@ const Map = () => {
         }}
       >
         <Typography variant="h6" sx={{ mb: 1 }}>
-          🗺️ Mapa
+          Map
         </Typography>
         <Typography variant="body2">
-          El componente del mapa se integrará aquí
+          The map component will be integrated here
         </Typography>
       </Box>
 
-      {/* Overlay simulado del mapa con puntos */}
+      {/* Overlay map simulated with points */}
       <Box
         sx={{
           position: 'absolute',

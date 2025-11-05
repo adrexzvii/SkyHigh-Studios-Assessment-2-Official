@@ -23,14 +23,14 @@ const POIExplorer = () => {
         <TopBar />
       </Box>
 
-      {/* Contenedor principal con Grid para ListPanel y Map */}
+      {/* principal container with Grid for ListPanel and Map */}
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
         <Grid
           container
           sx={{ height: '100%', width: '100%' }}
           spacing={0}
         >
-          {/* Panel de Lista - Columna izquierda */}
+          {/* List Panel - Left Column */}
           <Grid
             item
             xs={12}
@@ -44,7 +44,7 @@ const POIExplorer = () => {
             <ListPanel />
           </Grid>
 
-          {/* Mapa y POICard - Columna derecha */}
+          {/* Map and POICard - Right Column */}
           <Grid
             item
             xs={12}
@@ -56,10 +56,10 @@ const POIExplorer = () => {
               overflow: 'hidden'
             }}
           >
-            {/* Mapa de fondo */}
+            {/* Background map */}
             <Map />
-            
-            {/* POICard anclada sobre el mapa (bottom right) */}
+
+            {/* POICard anchored over the map (bottom right) */}
             <Box
               sx={{
                 position: 'absolute',

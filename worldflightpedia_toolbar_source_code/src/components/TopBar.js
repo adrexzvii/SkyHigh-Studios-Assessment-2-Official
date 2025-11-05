@@ -13,7 +13,7 @@ const TopBar = () => {
         backgroundColor: 'rgba(0, 0, 0, 0.3)'
       }}
     >
-      {/* Título */}
+      {/* Title */}
       <Typography
         variant="h6"
         sx={{
@@ -21,10 +21,10 @@ const TopBar = () => {
           color: 'white'
         }}
       >
-        POI Explorer
+        Flight Planner
       </Typography>
 
-      {/* Botones de acción */}
+      {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 2 }}>
         <Button
           variant="text"
@@ -34,7 +34,7 @@ const TopBar = () => {
             fontWeight: 500
           }}
         >
-          [Importar]
+          [Import]
         </Button>
         <Button
           variant="text"
@@ -44,7 +44,7 @@ const TopBar = () => {
             fontWeight: 500
           }}
         >
-          [Exportar]
+          [Export]
         </Button>
         <Button
           variant="text"
@@ -54,7 +54,7 @@ const TopBar = () => {
             fontWeight: 500
           }}
         >
-          [Ayuda]
+          [Help]
         </Button>
       </Box>
     </Box>

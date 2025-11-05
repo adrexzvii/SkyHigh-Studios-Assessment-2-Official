@@ -15,7 +15,7 @@ const POICard = () => {
       }}
     >
       <CardContent sx={{ padding: '16px', '&:last-child': { paddingBottom: '16px' } }}>
-        {/* Header de la ficha con botón cerrar */}
+        {/* Header of the card with close button */}
         <Box
           sx={{
             display: 'flex',
@@ -31,7 +31,7 @@ const POICard = () => {
               color: 'white'
             }}
           >
-            Ficha del POI (anclada)
+            POI Card (anchored)
           </Typography>
           <IconButton
             size="small"
@@ -47,17 +47,17 @@ const POICard = () => {
           </IconButton>
         </Box>
 
-        {/* Contenido de ejemplo */}
+        {/* Example content */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Typography
             variant="body2"
             sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
           >
-            La información detallada del POI seleccionado aparecerá aquí
+            The detailed information of the selected POI will appear here
           </Typography>
         </Box>
 
-        {/* Botones de acción de ejemplo */}
+        {/* Action buttons example */}
         <Box
           sx={{
             display: 'flex',
@@ -75,7 +75,7 @@ const POICard = () => {
               '&:hover': { textDecoration: 'underline' }
             }}
           >
-            [Navegar]
+            [Navigate]
           </Typography>
           <Typography
             variant="caption"
@@ -85,7 +85,7 @@ const POICard = () => {
               '&:hover': { textDecoration: 'underline' }
             }}
           >
-            [Editar]
+            [Edit]
           </Typography>
           <Typography
             variant="caption"
@@ -95,7 +95,7 @@ const POICard = () => {
               '&:hover': { textDecoration: 'underline' }
             }}
           >
-            [Eliminar]
+            [Delete]
           </Typography>
         </Box>
       </CardContent>
