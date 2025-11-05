@@ -22,6 +22,9 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Box } from "@mui/material";
+import FlightIcon from "@mui/icons-material/Flight";
+import SearchIcon from "@mui/icons-material/Search";
+import { createRoot } from "react-dom/client";
 import palette from "../theme/palette";
 import MapPopupWikipedia from "./MapPopupWikipedia";
 
@@ -333,25 +336,36 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             options: { position: "topleft" },
             onAdd: function() {
                 const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
-                const btn = L.DomUtil.create("a", "", container);
-                btn.href = "#";
+                const btn = L.DomUtil.create("div", "", container);
                 btn.title = "Follow plane"; // Translated from "Seguir avión"
                 btn.style.width = "30px";
                 btn.style.height = "30px";
                 btn.style.display = "flex";
                 btn.style.alignItems = "center";
                 btn.style.justifyContent = "center";
-                btn.style.fontSize = "16px";
-                btn.innerHTML = "A";
+                btn.style.cursor = "pointer";
+                btn.style.backgroundColor = "#fff";
+
+                // Create React root for the icon
+                const root = createRoot(btn);
 
                 const updateButton = () => {
-                    if (followRef.current) {
-                        btn.style.background = palette?.accent || "#00bcd4";
-                        btn.style.color = palette?.dark || "#000";
-                    } else {
-                        btn.style.background = "#fff";
-                        btn.style.color = "#000";
-                    }
+                    const isFollowing = followRef.current;
+                    const iconColor = isFollowing ? (palette?.dark || "#000") : "#000";
+                    const bgColor = isFollowing ? (palette?.accent || "#00bcd4") : "#fff";
+                    
+                    btn.style.backgroundColor = bgColor;
+                    
+                    // Render Material-UI Flight icon
+                    root.render(
+                        React.createElement(FlightIcon, {
+                            style: { 
+                                fontSize: "18px", 
+                                color: iconColor,
+                                transform: "rotate(45deg)" // Diagonal orientation like a plane in flight
+                            }
+                        })
+                    );
                 };
                 updateButton();
 
@@ -378,12 +392,26 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             options: { position: "topleft" },
             onAdd: function(map) {
                 const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
-                const button = L.DomUtil.create("a", "", container);
-                button.innerHTML = "B";
-                button.href = "#";
+                const button = L.DomUtil.create("div", "", container);
                 button.title = "Search nearby POIs"; // Translated from "Buscar POIs cercanos"
-                button.style.fontSize = "16px";
-                button.style.lineHeight = "30px";
+                button.style.width = "30px";
+                button.style.height = "30px";
+                button.style.display = "flex";
+                button.style.alignItems = "center";
+                button.style.justifyContent = "center";
+                button.style.cursor = "pointer";
+                button.style.backgroundColor = "#fff";
+
+                // Create React root for the search icon
+                const root = createRoot(button);
+                root.render(
+                    React.createElement(SearchIcon, {
+                        style: { 
+                            fontSize: "18px", 
+                            color: "#000"
+                        }
+                    })
+                );
 
                 L.DomEvent.on(button, "click", function(e) {
                     L.DomEvent.preventDefault(e);
@@ -391,6 +419,8 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
                     fetchPoisAroundPlane();
                 });
 
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.disableScrollPropagation(container);
                 return container;
             }
         });
