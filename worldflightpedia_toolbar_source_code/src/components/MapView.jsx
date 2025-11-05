@@ -40,6 +40,7 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
     // Flight tracking state
     const [followPlane, setFollowPlane] = useState(true);
     const followRef = useRef(followPlane);
+    const updateFollowButtonRef = useRef(null); // Reference to button update function
     
     // Route planning state
     const [remainingPois, setRemainingPois] = useState([]);
@@ -244,10 +245,21 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
 
     /**
      * Centers map on specified POI with animation
+     * Disables follow plane mode when manually focusing on a POI
      * @param {Object} poi - POI object with lat/lon coordinates
      */
     const focusOnPoi = (poi) => {
         if (mapRef.current && poi?.lat && poi?.lon) {
+            // Disable follow plane mode
+            setFollowPlane(false);
+            followRef.current = false;
+            
+            // Update the follow button UI if the update function exists
+            if (updateFollowButtonRef.current) {
+                updateFollowButtonRef.current();
+            }
+            
+            // Center map on POI
             mapRef.current.setView([poi.lat, poi.lon], 16, {
                 animate: true,
                 duration: 1
@@ -367,6 +379,9 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
                         })
                     );
                 };
+                
+                // Store the update function so it can be called externally
+                updateFollowButtonRef.current = updateButton;
                 updateButton();
 
                 L.DomEvent.on(btn, "click", (e) => {
