@@ -1,0 +1,39 @@
+{
+  "content": [
+    {
+      "path": "ContentInfo/adriantest2-worldflightpedia/Thumbnail.jpg",
+      "size": 5446,
+      "date": 133864020540174673
+    },
+    {
+      "path": "html_ui/icons/toolbar/ICON_TOOLBAR.svg",
+      "size": 2275,
+      "date": 133870358240000000
+    },
+    {
+      "path": "html_ui/InGamePanels/worldflightpedia-toolbar/css/worldFlightPedia.css",
+      "size": 15203,
+      "date": 134068411031720620
+    },
+    {
+      "path": "html_ui/InGamePanels/worldflightpedia-toolbar/index.html",
+      "size": 3729,
+      "date": 134068290177611321
+    },
+    {
+      "path": "html_ui/InGamePanels/worldflightpedia-toolbar/js/worldFlightPedia.js",
+      "size": 564548,
+      "date": 134068411031720620
+    },
+    {
+      "path": "html_ui/InGamePanels/worldflightpedia-toolbar/media/config.json",
+      "size": 204,
+      "date": 134068311801668876
+    },
+    {
+      "path": "InGamePanels/worldflightpedia-toolbar.spb",
+      "size": 691,
+      "date": 134068414933611858
+    }
+  ]
+}

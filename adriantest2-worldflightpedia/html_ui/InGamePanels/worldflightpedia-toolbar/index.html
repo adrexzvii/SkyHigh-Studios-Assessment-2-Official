@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1"
+    />
+    <meta
+      name="theme-color"
+      content="#000000"
+    />
+    <link
+      rel="manifest"
+      href="./manifest.json"
+    />
+    <title>React App</title>
+    <script
+      defer="defer"
+      src="./js/worldFlightPedia.js"
+    ></script>
+    <link
+      href="./css/worldFlightPedia.css"
+      rel="stylesheet"
+    />
+    <!--imported from the simulator-->
+    <link
+      rel="stylesheet"
+      href="/SCSS/common.css"
+    />
+    <link
+      rel="stylesheet"
+      href="/templates/virtualScroll/virtualScroll.css"
+    />
+    <script
+      type="text/javascript"
+      src="/JS/coherent.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/Flight.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/common.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/dataStorage.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/buttons.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/Services/ToolBarPanels.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/Pages/VCockpit/Instruments/Shared/BaseInstrument.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/simvar.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="./toggleButton.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="./InputableRange.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="./templates/ingameUi/ingameUi.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="/JS/Inputs.js"
+    ></script>
+    <link
+      rel="import"
+      href="/templates/NewPushButton/NewPushButton.html"
+    />
+    <link
+      rel="import"
+      href="/templates/ToggleButton/toggleButton.html"
+    />
+    <link
+      rel="import"
+      href="/templates/tabMenu/tabMenu.html"
+    />
+    <link
+      rel="import"
+      href="/templates/ingameUi/ingameUi.html"
+    />
+    <link
+      rel="import"
+      href="/templates/ingameUiHeader/ingameUiHeader.html"
+    />
+    <link
+      rel="import"
+      href="/templates/NewListButton/NewListButton.html"
+    />
+    <link
+      rel="import"
+      href="/templates/InputableRange/InputableRange.html"
+    />
+    <link
+      rel="import"
+      href="/templates/virtualScroll/virtualScroll.html"
+    />
+
+    <script
+      type="text/javascript"
+      src="/JS/debug.js"
+    ></script>
+    <!--------------------------------------->
+  </head>
+  <body
+    class="border-box"
+    style="background-color: transparent"
+  >
+    <ingamepanel-skyhigh>
+      <ingame-ui
+        id="SkyHighPanel"
+        panel-id="PANEL_skyhigh-studios"
+        title=""
+        class="ingameUiFrame panelInvisible"
+        content-fit="true"
+        style="
+          color: white; /* padding: var(--contentMargin); */
+          border: var(--contentMargin) solid transparent;
+          padding: 0px;
+          background-color: rgb(11, 15, 19);
+        "
+      >
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <!-- <virtual-scroll
+          scroll-type="visible"
+          style="
+            padding-right: 30px;
+            --scroll-bar-width: 15px;
+            /* margin-bottom: 62px; */
+            right: 32px;
+          "
+        > -->
+        <div id="root"></div>
+        <!-- </virtual-scroll> -->
+      </ingame-ui>
+    </ingamepanel-skyhigh>
+  </body>
+</html>
