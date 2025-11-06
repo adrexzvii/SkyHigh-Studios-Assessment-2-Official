@@ -39,6 +39,10 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
     const currentSegmentRef = useRef(null); // Reference for current active segment
     const staticSegmentsRef = useRef(null); // Reference for future static segments
   const visitedIdsRef = useRef(new Set()); // Dedup: prevent multiple "visited" renders
+    const resizeObserverRef = useRef(null); // Tracks container size to invalidate Leaflet
+    const loopRef = useRef(null); // Singleton interval for real-time updates
+    const orderedRouteRef = useRef([]); // Mirror of orderedRoute for the loop
+    const currentSegmentLineRef = useRef(null); // The actual polyline for current segment
     
     // Flight tracking state
     const [followPlane, setFollowPlane] = useState(true);
@@ -48,7 +52,6 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
     // Route planning state
     const [remainingPois, setRemainingPois] = useState([]);
     const [orderedRoute, setOrderedRoute] = useState([]);
-    const [currentTargetIndex, setCurrentTargetIndex] = useState(0);
     const [completedSegments, setCompletedSegments] = useState([]);
 
     /**
@@ -119,7 +122,6 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
         .filter(p => typeof p.lat === 'number' && typeof p.lon === 'number');
       
       setRemainingPois(valid);
-      setCurrentTargetIndex(0);
       setCompletedSegments([]);
       // Reset visited IDs when the POI list changes
       if (visitedIdsRef.current) visitedIdsRef.current.clear();
@@ -159,7 +161,6 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
       // Calculate optimal route order
       const ordered = nearestNeighborOrder(start, remainingPois);
       setOrderedRoute(ordered);
-      setCurrentTargetIndex(0);
 
       // Create layer groups if they don't exist
       if (!visitedLayerRef.current) visitedLayerRef.current = L.layerGroup().addTo(mapRef.current);
@@ -205,45 +206,71 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
      * Updates only the active segment between plane and next POI
      * Checks every second for proximity to target POI
      */
+    // Keep an up-to-date mirror of orderedRoute for the singleton loop
     useEffect(() => {
-      const interval = setInterval(() => {
-        if (!mapRef.current || !planeMarkerRef.current) return;
-        if (!orderedRoute || orderedRoute.length === 0) return;
-        
-        const idx = currentTargetIndex >= 0 ? currentTargetIndex : 0;
-        const target = orderedRoute[idx];
+      orderedRouteRef.current = Array.isArray(orderedRoute) ? orderedRoute : [];
+    }, [orderedRoute]);
+
+    /**
+     * Single real-time loop: updates plane→first-POI segment and handles arrivals.
+     * Uses refs to avoid multiple intervals and to update polyline in place.
+     */
+    useEffect(() => {
+      if (loopRef.current) {
+        clearInterval(loopRef.current);
+        loopRef.current = null;
+      }
+      loopRef.current = setInterval(() => {
+        const map = mapRef.current;
+        const marker = planeMarkerRef.current;
+        const route = orderedRouteRef.current;
+        if (!map || !marker) return;
+        if (!route || route.length === 0) {
+          // No route: remove current dynamic line if any
+          if (currentSegmentLineRef.current && currentSegmentRef.current) {
+            try { currentSegmentRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+            currentSegmentLineRef.current = null;
+          }
+          return;
+        }
+
+        const target = route[0];
         if (!target) return;
 
-        const planeLatLng = planeMarkerRef.current.getLatLng();
+        const planeLatLng = marker.getLatLng();
         if (!planeLatLng) return;
 
-        // Update current segment in real-time
-        if (currentSegmentRef.current) {
-          currentSegmentRef.current.clearLayers();
-          const currentSegment = L.polyline(
-            [[planeLatLng.lat, planeLatLng.lng], [target.lat, target.lon]], 
-            {
-              color: palette?.accent || "#00bcd4",
-              weight: 3,
-              opacity: 0.9,
-              smoothFactor: 1,
-              noClip: true
-            }
-          );
-          currentSegmentRef.current.addLayer(currentSegment);
+        // Ensure the layer group exists
+        if (!currentSegmentRef.current && mapRef.current) {
+          currentSegmentRef.current = L.layerGroup().addTo(mapRef.current);
         }
-        
-        const distKm = haversine(planeLatLng.lat, planeLatLng.lng, target.lat, target.lon);
-        const thresholdKm = 0.2; // 200 meters threshold
 
-        // Mark as visited if within threshold (guard against duplicate handling)
+        const latlngs = [[planeLatLng.lat, planeLatLng.lng], [target.lat, target.lon]];
+
+        // Update or create the current segment polyline in place
+        if (currentSegmentLineRef.current) {
+          try { currentSegmentLineRef.current.setLatLngs(latlngs); } catch (_) {}
+        } else {
+          currentSegmentLineRef.current = L.polyline(latlngs, {
+            color: palette?.accent || "#00bcd4",
+            weight: 3,
+            opacity: 0.9,
+            smoothFactor: 1,
+            noClip: true
+          });
+          currentSegmentRef.current.addLayer(currentSegmentLineRef.current);
+        }
+
+        // Arrival check
+        const distKm = haversine(planeLatLng.lat, planeLatLng.lng, target.lat, target.lon);
+        const thresholdKm = 0.2; // 200 meters
         if (distKm <= thresholdKm && !visitedIdsRef.current.has(target.id)) {
-          // Record that we already processed this target
           visitedIdsRef.current.add(target.id);
-          const planePos = planeMarkerRef.current.getLatLng();
+
+          const planePos = marker.getLatLng();
           const targetPos = [target.lat, target.lon];
-          
-          // Draw completed segment in red
+
+          // Completed segment in red
           const completedSegment = L.polyline([[planePos.lat, planePos.lng], targetPos], {
             color: "#ff0000",
             weight: 3,
@@ -251,54 +278,42 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             smoothFactor: 1,
             noClip: true
           });
-          
-          if (visitedLayerRef.current) {
-            visitedLayerRef.current.addLayer(completedSegment);
+          if (visitedLayerRef.current) visitedLayerRef.current.addLayer(completedSegment);
+
+          // Remove the dynamic line (it will be recreated for the next target on next tick)
+          if (currentSegmentLineRef.current && currentSegmentRef.current) {
+            try { currentSegmentRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+            currentSegmentLineRef.current = null;
           }
 
-          // Clear current segment as it's now completed
-          if (currentSegmentRef.current) {
-            currentSegmentRef.current.clearLayers();
-          }
-
-          // Remove the first static segment if it exists (the one we just completed to)
-          if (staticSegmentsRef.current && orderedRoute.length > 1) {
+          // Rebuild static segments excluding the first leg we just completed
+          if (staticSegmentsRef.current && route.length > 1) {
             staticSegmentsRef.current.clearLayers();
-            // Redraw remaining static segments
-            for (let i = 1; i < orderedRoute.length - 1; i++) {
-              const from = orderedRoute[i];
-              const to = orderedRoute[i + 1];
-              const staticSegment = L.polyline(
-                [[from.lat, from.lon], [to.lat, to.lon]], 
-                {
-                  color: "#006b4a",
-                  weight: 5,
-                  opacity: 0.8,
-                  smoothFactor: 1,
-                  noClip: true,
-                  dashArray: '10, 10'
-                }
-              );
+            for (let i = 1; i < route.length - 1; i++) {
+              const from = route[i];
+              const to = route[i + 1];
+              const staticSegment = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
+                color: "#006b4a",
+                weight: 5,
+                opacity: 0.8,
+                smoothFactor: 1,
+                noClip: true,
+                dashArray: '10, 10'
+              });
               staticSegmentsRef.current.addLayer(staticSegment);
             }
           }
-          
-          setCompletedSegments(prev => [...prev, { 
-            from: [planePos.lat, planePos.lng], 
-            to: targetPos 
-          }]);
-          
-          // Remove visited POI from remaining list
-          setRemainingPois(prev => {
-            const next = prev.filter(p => p.id !== target.id);
-            return next;
-          });
-          setCurrentTargetIndex(0);
+
+          setCompletedSegments(prev => [...prev, { from: [planePos.lat, planePos.lng], to: targetPos }]);
+          setRemainingPois(prev => prev.filter(p => p.id !== target.id));
         }
       }, 1000);
 
-      return () => clearInterval(interval);
-    }, [orderedRoute, currentTargetIndex]);
+      return () => {
+        if (loopRef.current) clearInterval(loopRef.current);
+        loopRef.current = null;
+      };
+    }, []);
 
     /**
      * Sync followPlane state with ref for use in Leaflet controls
@@ -505,13 +520,31 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             }
         });
 
-        // Add custom controls to map
+    // Add custom controls to map
         new FollowControl().addTo(mapRef.current);
         new FetchPoisControl().addTo(mapRef.current);
 
+    // Force initial size calculation (container may have been hidden/sized late)
+    try { map.invalidateSize(); } catch (_) {}
+    setTimeout(() => { try { map.invalidateSize(); } catch (_) {} }, 150);
+    // Resize observer to keep Leaflet layout correct without manual window resize
+    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserverRef.current = new ResizeObserver(() => {
+        if (mapRef.current) {
+          try { mapRef.current.invalidateSize(); } catch (_) {}
+        }
+      });
+      resizeObserverRef.current.observe(containerRef.current);
+    }
+
         // Cleanup on unmount
         return () => {
-            map.remove();
+      // Disconnect resize observer first
+      if (resizeObserverRef.current) {
+        try { resizeObserverRef.current.disconnect(); } catch (_) {}
+        resizeObserverRef.current = null;
+      }
+      map.remove();
             mapRef.current = null;
             poiLayerRef.current = null;
             planeMarkerRef.current = null;
