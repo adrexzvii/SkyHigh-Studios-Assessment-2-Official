@@ -6,7 +6,9 @@
 
 # This version ONLY works in ICAO: **SLCB** "Airport Jorge Wilstermann" located in: **Cochabamba,Bolivia**
 
----<img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165547" src="https://github.com/user-attachments/assets/b17aa9ad-d97c-4c58-9bcc-23bf6e02f249" />
+---
+
+<img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165547" src="https://github.com/user-attachments/assets/b17aa9ad-d97c-4c58-9bcc-23bf6e02f249" />
 
 <img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165655" src="https://github.com/user-attachments/assets/1f47ccab-ddc6-4586-b8a1-16abdf163db4" />
 
@@ -18,6 +20,27 @@
 - 📚 **Wikipedia Integration**: Rich POI information with descriptions and images
 - 🎯 **Proximity Detection**: Automatically tracks visited POIs within 200m radius
 - 🎨 **Material-UI Design**: Modern, responsive interface with dark/light theme support
+- 🔴 **SimObject Spawning**: Dynamic laser_red 3D model spawning/removal via keyboard controls
+
+---
+
+## 🎮 New Feature: SimObject Control
+
+This version includes enhanced WASM module functionality for spawning and removing the **laser_red** 3D model SimObject at coordinates **-17.389, -66.156** (Cochabamba, Bolivia).
+
+### Keyboard Controls:
+- **Press M**: Spawn the laser_red SimObject at the specified location
+- **Press N**: Remove the laser_red SimObject from the simulation
+
+### Technical Implementation:
+The WASM module now includes:
+- Global variables for SimConnect handle and object ID management
+- Event enumeration for keyboard input mapping
+- Utility functions `SpawnSimObject()` and `RemoveSimObject()`
+- Enhanced dispatch callback for real-time object management
+- Improved logging for debugging and action tracking
+
+---
 
 ## 🏗️ Project Architecture
 
@@ -49,10 +72,12 @@ SkyHigh-Studios-Assessment-2-Official/
 - `PackageSources/` - Source files to be packaged
 - `_PackageInt/` - Intermediate build files
 - `static/` - Static assets (images, icons, configuration files)
+- **SimObjects/laser_red/** - 3D model files (GLTF, BIN, XML, CFG configurations)
 
 **Key Files**:
 - Package manifest defines the add-on name, version, and dependencies
 - Build tools compile the project into a distributable MSFS package
+- Laser_red 3D model with complete configuration for in-game rendering
 
 ---
 
@@ -65,6 +90,8 @@ SkyHigh-Studios-Assessment-2-Official/
 - `ContentInfo/` - Content metadata and package information
 - `InGamePanels/` - HTML/JS panel definitions for in-game toolbar
 - `html_ui/` - Compiled React application and UI assets
+- `SimObjects/` - Laser_red 3D model for spawning tests
+- `scenery/` - BGL scenery test files for ICAO: SLCB
 
 **Installation**: Users drag this folder into their MSFS Community folder to install the add-on.
 
@@ -72,6 +99,7 @@ SkyHigh-Studios-Assessment-2-Official/
 - ✅ Properly structured manifest with all required MSFS metadata
 - ✅ Layout definition follows MSFS packaging standards
 - ✅ Content info provides proper version tracking
+- ✅ Includes laser_red SimObject for testing purposes
 
 ---
 
@@ -90,21 +118,26 @@ SkyHigh-Studios-Assessment-2-Official/
 - **Language**: C++17
 - **Build System**: Visual Studio 2019/2022 with MSFS WASM SDK
 - **Purpose**: Bridges JavaScript UI with MSFS SimConnect API
-- **Functionality**: Provides low-level access to aircraft telemetry, flight plans, and simulation variables
+- **Functionality**: Provides low-level access to aircraft telemetry, flight plans, simulation variables, and SimObject spawning
 
 **Code Review Highlights**:
 ```cpp
 // Main module entry points:
-// - module_init(): Initialize SimConnect connection
+// - module_init(): Initialize SimConnect connection and subscribe to keyboard events
 // - module_deinit(): Clean up resources
 // - update(): Called every frame to sync data
+// - SpawnSimObject(): Creates laser_red at specified coordinates (-17.389, -66.156)
+// - RemoveSimObject(): Removes spawned laser_red from simulation
 // - Exposes SimVars (PLANE LATITUDE, PLANE LONGITUDE, etc.)
+// - Keyboard mapping: M key = Spawn, N key = Remove
 ```
 
 **Integration Points**:
 - Reads aircraft position (latitude, longitude, altitude, heading)
 - Interfaces with GPS flight plan system
 - Provides real-time telemetry data to React UI via Coherent GT
+- **NEW**: Spawns and removes SimObjects dynamically via keyboard input
+- **NEW**: Manages object IDs for proper cleanup and tracking
 
 ---
 
@@ -144,132 +177,65 @@ src/
 
 ---
 
-## 🔍 Code Review Summary
+## 🔍 Recent Updates (Latest Commits)
 
-### Component Analysis
+### November 8, 2025 - Major WASM Module Enhancement
+**Commits**: `9780b15`, `f400d8f`, `b461b44`
 
-#### **App.js** - Main Application Container
-**Responsibilities**:
-- State management for POIs, map center, selected POI
-- Coordinate communication between child components
-- Layout orchestration with TopBar, SearchPanel, PoiList, and MapView
+**Changes**:
+1. **SimConnect Object Spawning System**: Implemented full SimObject spawning and removal functionality
+   - Added global variables for SimConnect handle and object ID management
+   - Defined enumerations for event IDs, groups, and requests
+   - Implemented `SpawnSimObject()` and `RemoveSimObject()` utility functions
+   - Enhanced module initialization to subscribe to system events
+   - Mapped keyboard inputs (M = spawn, N = remove) for object management
+   - Updated dispatch callback to handle new events
+   - Improved logging for better debugging
 
-**Code Quality**: ✅ Excellent
-- Clean state management
-- Well-organized component hierarchy
-- Proper prop drilling with clear data flow
+2. **Layout Updates**: Modified `layout.json` with updated file dates and sizes for new WASM binary
 
----
+3. **3D Model Integration**: Added complete laser_red 3D model files
+   - GLTF and BIN model files
+   - XML configuration for MSFS integration
+   - CFG files for SimObject properties
+   - BGL scenery test in ICAO: SLCB (Cochabamba, Bolivia)
 
-#### **MapView.jsx** - Core Map Component
-**Complexity**: High (Most critical component)
+### November 8, 2025 - README and Documentation Updates
+**Commits**: `7dbb4c4`, `45e6186`, `0bc845d`, `1ac7b4a`
 
-**Features Implemented**:
-1. **Real-time Plane Tracking**: Polls MSFS SimVars every 1000ms
-2. **Haversine Distance Calculation**: Accurate geodesic distance computation
-3. **Nearest-Neighbor Routing**: Optimized POI route planning algorithm
-4. **Proximity Detection**: 200m threshold for visited POI tracking
-5. **Custom Leaflet Controls**: Follow plane button, fetch POIs button
+**Changes**:
+- Created comprehensive README.md with full project documentation
+- Added beta status notification
+- Enhanced OpenStreetMap integration details
+- Added airport-specific information (ICAO: SLCB)
+- Included screenshots for visual representation
 
-**Key Algorithm - Nearest Neighbor Order**:
-```javascript
-/**
- * Calculates optimal POI visiting order using nearest-neighbor heuristic
- * 1. Start with plane's current position
- * 2. Find closest unvisited POI
- * 3. Move to that POI and repeat
- * 4. Returns ordered array minimizing total flight distance
- */
-```
+### November 6-7, 2025 - UI/UX Improvements
+**Commits**: `5c4063e`, `7d39265`, `442571e`, `4b18c25`, `d562db4`
 
-**MSFS Integration**:
-```javascript
-// SimVar access via Coherent GT bridge
-window.coherent?.call('GET_SIM_VAR_VALUE', 'PLANE LATITUDE', 'degrees')
-window.coherent?.call('GET_SIM_VAR_VALUE', 'PLANE LONGITUDE', 'degrees')
-```
+**Changes**:
+- Enhanced MapView with real-time updates and improved segment tracking
+- Added ResizeObserver for dynamic layout adjustments
+- Refactored route handling for independent segment visualization
+- Improved visited POI tracking in real time
+- Enhanced POI selection colors and display states
+- Updated layout and styling with custom scrollbars
+- Added follow plane toggle functionality
+- Improved MapPopupWikipedia styling with scrollable content
 
-**Code Quality**: ✅ Good
-- Complex but well-documented logic
-- Proper error handling
-- Efficient route calculation
-- Memory-safe interval management
+### November 5, 2025 - Component Refactoring
+**Commits**: `03dd374`, `7c9d6c1`, `2478d3d`, `aac58d9`
 
----
-
-#### **TopBar.jsx** - Flight Plan Controls
-**Features**:
-- Save/Load flight plan buttons
-- MSFS Coherent API integration for flight plan management
-- Export flight plan to MSFS GPS system
-
-**MSFS API Calls**:
-```javascript
-// Save flight plan to MSFS
-engine.call('SAVE_FLIGHT_PLAN', JSON.stringify(flightPlanData))
-
-// Load flight plan from MSFS
-engine.call('LOAD_FLIGHT_PLAN')
-```
-
-**Code Quality**: ✅ Excellent
-- Clear function documentation
-- Proper async/await patterns
-- User-friendly error messages
-
----
-
-#### **SearchPanel.jsx** - POI Search Interface
-**Features**:
-- Latitude/Longitude input with validation
-- Radius search (default 5000m)
-- Async POI fetching from backend/Wikipedia API
-
-**UI/UX**: Clean Material-UI form with responsive design
-
-**Code Quality**: ✅ Good
-- Input validation
-- Error handling
-- Translated to English (was Spanish)
-
----
-
-#### **POIPopup.jsx** & **MapPopupWikipedia.jsx** - Info Display
-**Features**:
-- Wikipedia article parsing
-- Image display with fallback
-- Expandable descriptions (Show more/less)
-- Distance calculation from plane
-
-**Code Quality**: ✅ Good
-- Responsive design
-- Proper HTML sanitization (no XSS vulnerabilities)
-- Graceful degradation for missing data
-
----
-
-#### **PoiList.jsx** - Results List
-**Features**:
-- Scrollable POI list with click-to-focus
-- Empty state handling
-- Distance display from plane position
-
-**Code Quality**: ✅ Excellent
-- Simple, efficient rendering
-- Proper key management for React lists
-
----
-
-### Theme System - **palette.js**
-**Color Scheme**: Professional blue-based palette
-- Primary: Blue tones for main actions
-- Secondary: Gray tones for contrast
-- Background: Dark mode optimized
-- Text: High contrast for readability
-
-**Code Quality**: ✅ Excellent
-- Well-documented color values
-- Consistent naming convention
+**Changes**:
+- Added comprehensive JSDoc documentation to all components
+- Replaced old Map component with new MapView
+- Introduced MapPopupWikipedia for detailed POI information
+- Created new POIPopup, PoiList, and SearchPanel components
+- Updated TopBar with save/load flight plan functionality
+- Enhanced CSS styles for better UI/UX
+- Translated all Spanish text to English
+- Removed deprecated components (POICard, old Map)
+- Introduced new color palette for consistent theming
 
 ---
 
@@ -282,7 +248,7 @@ engine.call('LOAD_FLIGHT_PLAN')
 ├─────────────────────┤
 │  Coherent GT Bridge │  ← JavaScript ↔ C++ communication layer
 ├─────────────────────┤
-│  WASM Module (C++)  │  ← Low-level SimConnect access
+│  WASM Module (C++)  │  ← Low-level SimConnect access + SimObject spawning
 ├─────────────────────┤
 │  MSFS SimConnect    │  ← Core simulator API
 └─────────────────────┘
@@ -292,6 +258,7 @@ engine.call('LOAD_FLIGHT_PLAN')
 1. **UI → WASM**: User clicks "Save Flight Plan" → Coherent call → WASM module → SimConnect
 2. **WASM → UI**: Aircraft position updates → WASM polls SimVars → Coherent event → React state update
 3. **External API**: Wikipedia POI data fetched asynchronously from backend service
+4. **Keyboard → WASM**: User presses M/N → WASM module → SpawnSimObject/RemoveSimObject → SimConnect
 
 ---
 
@@ -314,13 +281,14 @@ npm run build  # Creates optimized bundle in dist/
 2. Copy dist files to `adriantest2-worldflightpedia/html_ui/`
 3. Build WASM module with Visual Studio (Release configuration)
 4. Copy WASM binary to package
-5. Run `fspackagetool.exe` to create `.fspackage`
+5. Ensure laser_red 3D model files are in SimObjects folder
+6. Run `fspackagetool.exe` to create `.fspackage`
 
 ---
 
 ## 📊 Code Quality Metrics
 
-### Overall Assessment: ✅ Production-Ready
+### Overall Assessment: ✅ Production-Ready (Beta Stage)
 
 **Strengths**:
 - ✅ Comprehensive JSDoc documentation throughout
@@ -331,6 +299,8 @@ npm run build  # Creates optimized bundle in dist/
 - ✅ Professional UI/UX with Material-UI
 - ✅ Robust error handling
 - ✅ Fully translated to English (previously Spanish)
+- ✅ Advanced SimObject spawning capabilities
+- ✅ Keyboard-controlled testing features
 
 **Completed Improvements** (from Code_Review.md):
 - ✅ All Spanish comments translated to English
@@ -339,6 +309,7 @@ npm run build  # Creates optimized bundle in dist/
 - ✅ Fixed typos ("Buscar POIss" → "Search POIs")
 - ✅ Standardized coding practices
 - ✅ Improved code organization
+- ✅ Implemented SimObject management system
 
 ---
 
@@ -352,6 +323,8 @@ npm run build  # Creates optimized bundle in dist/
 3. Copy the `adriantest2-worldflightpedia` folder into Community
 4. Restart Microsoft Flight Simulator
 5. Access the toolbar in-game from the toolbar menu
+6. **Test SimObject Spawning**: Press **M** to spawn laser_red at -17.389, -66.156 (Cochabamba)
+7. **Remove SimObject**: Press **N** to remove the spawned laser_red
 
 ### For Developers
 1. Clone the repository
@@ -359,26 +332,20 @@ npm run build  # Creates optimized bundle in dist/
 3. Install Node.js dependencies in `worldflightpedia_toolbar_source_code/`
 4. Run development server or build production bundle
 5. Follow package build process above
+6. Test SimObject spawning functionality in ICAO: SLCB
 
 ---
 
 ## 📝 API Dependencies
 
-- **MSFS SDK**: Required for WASM module compilation
+- **MSFS SDK**: Required for WASM module compilation and SimConnect integration
 - **Wikipedia API**: For POI data (assumes backend service)
 - **Leaflet**: Open-source map library
 - **Material-UI**: React component library
+- **SimConnect API**: For SimObject spawning and removal
 
 ---
 
-## 🔮 Future Enhancements (Potential)
-
-- Add weather overlay on map
-- Implement multiplayer POI sharing
-- Add custom POI creation
-- Voice-guided navigation
-- VR support for map interface
-- Mobile companion app
 
 ---
 
@@ -400,9 +367,21 @@ Project license not specified in repository. Contact repository owner for licens
 - Leaflet and React-Leaflet contributors
 - Material-UI team
 - Wikipedia API
+- Blender community for 3D modeling support
+
+---
+
+## 📝 Version History
+
+### Current Version (Beta)
+- **Location**: ICAO: SLCB (Airport Jorge Wilstermann, Cochabamba, Bolivia)
+- **Features**: Full POI discovery, flight planning, Wikipedia integration, SimObject spawning
+- **Keyboard Controls**: M (spawn), N (remove)
+- **Test Coordinates**: -17.389, -66.156
 
 ---
 
 **Last Updated**: November 8, 2025  
 **MSFS Version Compatibility**: Microsoft Flight Simulator 2020 (MSFS 2020)  
-**Status**: ✅ Work in Progress, still on beta/alfa stage
+**Status**: ✅ Beta/Alpha Stage - Work in Progress  
+**Note**: This version is for testing and project traceability purposes
