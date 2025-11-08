@@ -1,36 +1,28 @@
-﻿// -----------------------------------------------------------------------------
-// worldFlightPedia_wasm_module.cpp
-// Context: Standalone WASM SimConnect module for MSFS to inject / remove SimObjects
-// -----------------------------------------------------------------------------
-
-#include <MSFS/MSFS.h>
+﻿#include <MSFS/MSFS.h>
 #include <MSFS/MSFS_WindowsTypes.h>
 #include <SimConnect.h>
 #include "worldFlightPedia_wasm_module.h"
 
-// -----------------------------------------------------------------------------
-// GLOBAL VARIABLES
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------
+// Global SimConnect handle
+// ----------------------------------------------------
+HANDLE g_hSimConnect = 0;
+static unsigned int g_frameCounter = 0; // para heartbeat
+static DWORD g_lasersID = SIMCONNECT_OBJECT_ID_USER; // almacenará el id asignado al crear Lasers
 
-HANDLE g_hSimConnect = 0; // Global SimConnect handle (connection interface)
-static DWORD g_lasersID = SIMCONNECT_OBJECT_ID_USER; // Stores the assigned object ID once "laser_red" is spawned
-
-
-// -----------------------------------------------------------------------------
-// ENUMERATIONS: Event IDs, Groups, and Requests
-// -----------------------------------------------------------------------------
-
-// List of SimConnect system and custom events handled by this module
+// ----------------------------------------------------
+// Enum para eventos del módulo
+// ----------------------------------------------------
 enum eEvents
 {
-    EVENT_FLIGHT_LOADED = 0, // Triggered when a flight is loaded
-    EVENT_SIM_START = 1, // Triggered when the simulator session starts
-    EVENT_FLIGHTPLAN_LOADED = 2, // Triggered when a flight plan is loaded
-    EVENT_TRIGGER_M = 3, // Custom event mapped to key 'M' (spawn object)
-    EVENT_TRIGGER_N = 4  // Custom event mapped to key 'N' (remove object)
+    EVENT_FLIGHT_LOADED = 0,
+    EVENT_SIM_START = 1,
+    EVENT_FLIGHTPLAN_LOADED = 2,
+    EVENT_TRIGGER_M = 3,
+    EVENT_TRIGGER_N = 4
 };
 
-// Notification and input groups used to map keyboard events
+// Grupos/Inputs para MapInputEventToClientEvent
 enum eGroups {
     GROUP_INPUT = 0
 };
@@ -39,39 +31,38 @@ enum eInputs {
     INPUT_GROUP = 0
 };
 
-// Async request identifiers used for tracking specific SimConnect operations
+// Request IDs para operaciones asíncronas
 enum eRequests {
-    REQUEST_ADD_LASERS = 101, // Request ID for creating the object
-    REQUEST_REMOVE_LASERS = 201 // Request ID for removing the object
+    REQUEST_ADD_LASERS = 101,
+    REQUEST_REMOVE_LASERS = 201
 };
 
-// -----------------------------------------------------------------------------
-// CALLBACK DECLARATION
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------
+// Declaración de callback
+// ----------------------------------------------------
 void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContext);
 
-// -----------------------------------------------------------------------------
-// UTILITY: Spawn a SimObject at given coordinates
-// -----------------------------------------------------------------------------
-static void SpawnSimObject(double lat, double lon)
+// ----------------------------------------------------
+// Utilidad: spawn de SimObject
+// ----------------------------------------------------
+static void SpawnSimObject(double lat, double lon, double alt)
 {
     if (!g_hSimConnect)
-        return; // ensure early exit if connection is not established
+        return;
 
     SIMCONNECT_DATA_INITPOSITION pos = {};
     pos.Latitude = lat;
     pos.Longitude = lon;
-    pos.Altitude = 0; // Altitude 0 → use terrain elevation
+    pos.Altitude = alt;
     pos.Pitch = 0;
     pos.Bank = 0;
     pos.Heading = 0;
-	pos.OnGround = 1; // SimObject spawns on ground level at the specified lat/lon. The "0" altitude value is ignored when OnGround=1, we need to set and altitude.
+    pos.OnGround = 0;
 
-    // Attempt to spawn the SimObject named "laser_red" (must exist as a defined SimObject)
     HRESULT hr = SimConnect_AICreateSimulatedObject(g_hSimConnect, "laser_red", pos, REQUEST_ADD_LASERS);
     if (hr == S_OK)
     {
-        fprintf(stderr, "[MSFS] Spawn request submitted for 'laser_red' (request=%d) at %.5f, %.5f (terrain)\n", REQUEST_ADD_LASERS, lat, lon);
+        fprintf(stderr, "[MSFS] Spawn request submitted for 'Lasers' (request=%d) at %.5f, %.5f, alt %.1f\n", REQUEST_ADD_LASERS, lat, lon, alt);
     }
     else
     {
@@ -79,9 +70,9 @@ static void SpawnSimObject(double lat, double lon)
     }
 }
 
-// -----------------------------------------------------------------------------
-// UTILITY: Remove the last spawned SimObject
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------
+// Utilidad: remove SimObject
+// ----------------------------------------------------
 static void RemoveLasersObject()
 {
     if (!g_hSimConnect)
@@ -89,16 +80,16 @@ static void RemoveLasersObject()
 
     if (g_lasersID == SIMCONNECT_OBJECT_ID_USER)
     {
-        fprintf(stderr, "[MSFS] No known 'lasers_red' object to remove.\n");
+        fprintf(stderr, "[MSFS] No known 'Lasers' object to remove.\n");
         return;
     }
 
     HRESULT hr = SimConnect_AIRemoveObject(g_hSimConnect, g_lasersID, REQUEST_REMOVE_LASERS);
     if (hr == S_OK)
     {
-        fprintf(stderr, "[MSFS] Remove request submitted for 'Lasers_red' id=%u (request=%d)\n", (unsigned)g_lasersID, REQUEST_REMOVE_LASERS);
-        
-        g_lasersID = SIMCONNECT_OBJECT_ID_USER;// Reset stored ID
+        fprintf(stderr, "[MSFS] Remove request submitted for 'Lasers' id=%u (request=%d)\n", (unsigned)g_lasersID, REQUEST_REMOVE_LASERS);
+        // clear local id; object removal is requested
+        g_lasersID = SIMCONNECT_OBJECT_ID_USER;
     }
     else
     {
@@ -106,10 +97,9 @@ static void RemoveLasersObject()
     }
 }
 
-// -----------------------------------------------------------------------------
-// MODULE INITIALIZATION
-// Called automatically when the WASM module is loaded by the simulator
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------
+// INIT: conexión mínima
+// ----------------------------------------------------
 extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
 {
     const char* clientName = "FlightpediaConnect";
@@ -123,9 +113,7 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
 
     fprintf(stderr, "[MSFS] v4 SimConnect connected as '%s'.\n", clientName);
 
-    // -------------------------------------------------------------------------
-  // Subscribe to system-level events
-  // -------------------------------------------------------------------------
+    // Suscripciones
     hr = SimConnect_SubscribeToSystemEvent(g_hSimConnect, EVENT_FLIGHT_LOADED, "FlightLoaded");
     fprintf(stderr, "[MSFS] Subscribed FlightLoaded -> %s (id=%d)\n", hr==S_OK?"OK":"FAIL", EVENT_FLIGHT_LOADED);
 
@@ -135,28 +123,21 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
     hr = SimConnect_SubscribeToSystemEvent(g_hSimConnect, EVENT_FLIGHTPLAN_LOADED, "FlightPlanLoaded");
     fprintf(stderr, "[MSFS] Subscribed FlightPlanLoaded -> %s (id=%d)\n", hr==S_OK?"OK":"FAIL", EVENT_FLIGHTPLAN_LOADED);
 
-    // -------------------------------------------------------------------------
-    // Map keyboard input (M → spawn, N → remove)
-    // -------------------------------------------------------------------------
-    // NOTE: In MSFS standalone modules, key mapping only works if focus is active.
-    //       Ensure the module’s input group is correctly configured in the manifest.
-
+    // Mapear tecla 'M' a un evento cliente usando MapInputEventToClientEvent
     hr = SimConnect_MapClientEventToSimEvent(g_hSimConnect, EVENT_TRIGGER_M, "Flightpedia.M");
     fprintf(stderr, "[MSFS] MapClientEventToSimEvent EVENT_TRIGGER_M -> %s\n", hr==S_OK?"OK":"FAIL");
 
     hr = SimConnect_MapInputEventToClientEvent(g_hSimConnect, INPUT_GROUP, "M", EVENT_TRIGGER_M);
     fprintf(stderr, "[MSFS] MapInputEventToClientEvent 'M' -> %s\n", hr==S_OK?"OK":"FAIL");
 
-    
+    // Mapear tecla 'N' para eliminar objeto
     hr = SimConnect_MapClientEventToSimEvent(g_hSimConnect, EVENT_TRIGGER_N, "Flightpedia.N");
     fprintf(stderr, "[MSFS] MapClientEventToSimEvent EVENT_TRIGGER_N -> %s\n", hr==S_OK?"OK":"FAIL");
 
     hr = SimConnect_MapInputEventToClientEvent(g_hSimConnect, INPUT_GROUP, "N", EVENT_TRIGGER_N);
     fprintf(stderr, "[MSFS] MapInputEventToClientEvent 'N' -> %s\n", hr==S_OK?"OK":"FAIL");
 
-    // -------------------------------------------------------------------------
-     // Register events and activate input group
-     // -------------------------------------------------------------------------
+    // Añadir los eventos cliente al grupo de notificación y activar el grupo de input
     hr = SimConnect_AddClientEventToNotificationGroup(g_hSimConnect, GROUP_INPUT, EVENT_TRIGGER_M);
     fprintf(stderr, "[MSFS] AddClientEventToNotificationGroup EVENT_TRIGGER_M -> %s\n", hr==S_OK?"OK":"FAIL");
 
@@ -169,9 +150,7 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
     hr = SimConnect_SetInputGroupState(g_hSimConnect, INPUT_GROUP, SIMCONNECT_STATE_ON);
     fprintf(stderr, "[MSFS] SetInputGroupState INPUT_GROUP ON -> %s\n", hr==S_OK?"OK":"FAIL");
 
-    // -------------------------------------------------------------------------
-    // Dispatch initial events (flush startup messages)
-    // -------------------------------------------------------------------------
+    // Try an initial dispatch to flush any pending messages
     hr = SimConnect_CallDispatch(g_hSimConnect, MyDispatchProc, nullptr);
     if (hr != S_OK)
     {
@@ -183,10 +162,9 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
     }
 }
 
-// -----------------------------------------------------------------------------
-// MODULE DEINITIALIZATION
-// Called automatically when the simulator unloads the WASM module
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------
+// DEINIT: cierre limpio
+// ----------------------------------------------------
 extern "C" MODULE_EXPORT MSFS_CALLBACK void module_deinit(void)
 {
     if (g_hSimConnect)
@@ -200,10 +178,9 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_deinit(void)
     }
 }
 
-// -----------------------------------------------------------------------------
-// DISPATCH CALLBACK HANDLER
-// Handles all messages coming from SimConnect asynchronously
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------
+// DISPATCH CALLBACK
+// ----------------------------------------------------
 void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContext)
 {
     if (!pData)
@@ -211,9 +188,6 @@ void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContex
 
     switch (pData->dwID)
     {
-        // ---------------------------------------------------------------------
-        // Event containing filenames (flight loaded, flight plan loaded, etc.)
-        // ---------------------------------------------------------------------
     case SIMCONNECT_RECV_ID_EVENT_FILENAME:
     {
         SIMCONNECT_RECV_EVENT_FILENAME* evt = (SIMCONNECT_RECV_EVENT_FILENAME*)pData;
@@ -227,9 +201,6 @@ void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContex
         }
         break;
     }
-    // ---------------------------------------------------------------------
-       // Generic event handler for all subscribed events
-       // ---------------------------------------------------------------------
     case SIMCONNECT_RECV_ID_EVENT:
     {
         SIMCONNECT_RECV_EVENT* evt = (SIMCONNECT_RECV_EVENT*)pData;
@@ -243,15 +214,14 @@ void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContex
         }
         else if (evt->uEventID == EVENT_TRIGGER_M)
         {
-            // Triggered when the 'M' key is pressed
-            fprintf(stderr, "[MSFS] Key 'M' pressed - triggered EVENT_TRIGGER_M\n");
-            
-            SpawnSimObject(-17.389, -66.156);// Example coords (Cochabamba, Bolivia)
+            // Cuando el usuario presiona 'M' se mapeará aquí
+            fprintf(stderr, "[MSFS][ERROR] Key 'M' pressed - triggered EVENT_TRIGGER_M\n");
+            // Spawn Lasers at Cochabamba example coordinates
+            SpawnSimObject(-17.389, -66.156, 2600.0);
         }
         else if (evt->uEventID == EVENT_TRIGGER_N)
         {
-            // Triggered when the 'N' key is pressed
-            fprintf(stderr, "[MSFS] Key 'N' pressed - triggered EVENT_TRIGGER_N\n");
+            fprintf(stderr, "[MSFS][ERROR] Key 'N' pressed - triggered EVENT_TRIGGER_N\n");
             // Remove Lasers object
             RemoveLasersObject();
         }
@@ -267,7 +237,7 @@ void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContex
         if (pObj->dwRequestID == REQUEST_ADD_LASERS)
         {
             g_lasersID = pObj->dwObjectID;
-            fprintf(stderr, "[MSFS] Assigned object id for 'laser_red' = %u (request=%u)\n", (unsigned)g_lasersID, (unsigned)pObj->dwRequestID);
+            fprintf(stderr, "[MSFS] Assigned object id for 'Lasers' = %u (request=%u)\n", (unsigned)g_lasersID, (unsigned)pObj->dwRequestID);
         }
         else
         {
@@ -276,7 +246,7 @@ void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContex
         break;
     }
     default:
-        // Other message types not explicitly handled
+        // Otros paquetes ignorados
         break;
     }
 }
