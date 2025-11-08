@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModelInfo guid="{70eb1681-71b7-44f4-8959-af6c18dbfd29}" version="1.1">
+	<LODS>
+		<LOD minSize="0" ModelFile="Lasers.gltf"/>
+	</LODS>
+</ModelInfo>
