@@ -2,7 +2,7 @@
 # its not the final release, still on BETA stage, this is made just for testing and project traceability
 ## 📋 Project Overview
 
-**WorldFlightPedia** is a custom add-on/mod for Microsoft Flight Simulator 2020 (MSFS 2020) that provides an in-game toolbar interface to discover and navigate to Points of Interest (POIs) around the world. The application integrates Wikipedia data and real-time flight tracking to create an interactive encyclopedia experience while flying.
+**WorldFlightPedia** is a custom add-on/mod for Microsoft Flight Simulator 2020 (MSFS 2020) that provides an in-game toolbar interface to discover and navigate to Points of Interest (POIs) around the world. The application integrates Wikipedia data and real-time flight tracking to create an interactive encyclopedia experience while flying and openstreetmap with leaflet overlay map integration.
 
 ### Key Features
 - 🗺️ **Interactive Map Interface**: Real-time Leaflet map integration with plane tracking
