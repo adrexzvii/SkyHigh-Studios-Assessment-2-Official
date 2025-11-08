@@ -4,6 +4,12 @@
 
 **WorldFlightPedia** is a custom add-on/mod for Microsoft Flight Simulator 2020 (MSFS 2020) that provides an in-game toolbar interface to discover and navigate to Points of Interest (POIs) around the world. The application integrates Wikipedia data and real-time flight tracking to create an interactive encyclopedia experience while flying and openstreetmap with leaflet overlay map integration.
 
+# This version ONLY works in ICAO: **SLCB** "Airport Jorge Wilstermann" located in: **Cochabamba,Bolivia**
+
+---<img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165547" src="https://github.com/user-attachments/assets/b17aa9ad-d97c-4c58-9bcc-23bf6e02f249" />
+
+<img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165655" src="https://github.com/user-attachments/assets/1f47ccab-ddc6-4586-b8a1-16abdf163db4" />
+
 ### Key Features
 - 🗺️ **Interactive Map Interface**: Real-time Leaflet map integration with plane tracking
 - 📍 **POI Discovery**: Search for nearby Points of Interest based on your current location
@@ -12,10 +18,6 @@
 - 📚 **Wikipedia Integration**: Rich POI information with descriptions and images
 - 🎯 **Proximity Detection**: Automatically tracks visited POIs within 200m radius
 - 🎨 **Material-UI Design**: Modern, responsive interface with dark/light theme support
-
----<img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165547" src="https://github.com/user-attachments/assets/b17aa9ad-d97c-4c58-9bcc-23bf6e02f249" />
-
-<img width="1919" height="1079" alt="Captura de pantalla 2025-11-07 165655" src="https://github.com/user-attachments/assets/1f47ccab-ddc6-4586-b8a1-16abdf163db4" />
 
 ## 🏗️ Project Architecture
 
