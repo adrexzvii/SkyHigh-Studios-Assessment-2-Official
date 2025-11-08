@@ -1,0 +1,46 @@
+﻿#include <MSFS/MSFS.h>
+#include <MSFS/MSFS_WindowsTypes.h>
+#include <SimConnect.h>
+
+// ----------------------------------------------------
+// Global SimConnect handle
+// ----------------------------------------------------
+HANDLE g_hSimConnect = 0;
+
+// ----------------------------------------------------
+// INIT: conexión mínima
+// ----------------------------------------------------
+extern "C" MSFS_CALLBACK void module_init(void)
+{
+    const char* clientName = "FlightpediaConnect";
+    HRESULT hr = SimConnect_Open(&g_hSimConnect, clientName, 0, 0, 0, 0);
+    if (hr != S_OK)
+    {
+        fprintf(stderr, "[MSFS] SimConnect_Open('%s') failed (HRESULT=0x%08X)\n", clientName, static_cast<unsigned int>(hr));
+        g_hSimConnect = 0;
+        return;
+    }
+
+    fprintf(stderr, "[MSFS] SimConnect connected as '%s'.\n", clientName);
+}
+
+// ----------------------------------------------------
+// DEINIT: cierre limpio
+// ----------------------------------------------------
+extern "C" MSFS_CALLBACK void module_deinit(void)
+{
+    if (g_hSimConnect)
+    {
+        SimConnect_Close(g_hSimConnect);
+        g_hSimConnect = 0;
+        fprintf(stderr, "[MSFS] SimConnect closed.\n");
+    }
+}
+
+// ----------------------------------------------------
+// UPDATE: no hacemos nada por ahora
+// ----------------------------------------------------
+extern "C" MSFS_CALLBACK void module_update(void)
+{
+    // Intencionalmente vacío: por ahora solo conectamos/desconectamos.
+}
