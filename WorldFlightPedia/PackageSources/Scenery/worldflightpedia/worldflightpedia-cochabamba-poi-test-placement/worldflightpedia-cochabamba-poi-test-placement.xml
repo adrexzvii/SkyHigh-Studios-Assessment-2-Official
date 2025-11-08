@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<FSData version="9.0">
+	<SceneryObject lat="-17.42112967530377" lon="-66.17712906440153" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="1" lat="-17.40657279327382" lon="-66.14032236430614" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="9" lat="-17.39994388733818" lon="-66.19998115049147" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="4" lat="-17.39506259265102" lon="-66.15698562514009" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="3" lat="-17.39382760203436" lon="-66.15687712805703" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="2" lat="-17.39348357468814" lon="-66.14594760145417" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="8" lat="-17.38799777701915" lon="-66.15995911463835" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="7" lat="-17.38298093971587" lon="-66.16699743833388" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="5" lat="-17.38195333370663" lon="-66.15599301705093" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+	<SceneryObject groupIndex="6" lat="-17.37925213821793" lon="-66.16178801900790" alt="0.00000000000000" pitch="0.000000" bank="0.000000" heading="-179.999995" imageComplexity="VERY_SPARSE" altitudeIsAgl="TRUE" snapToGround="TRUE" snapToNormal="FALSE">
+		<SimObject containerTitle="laser_red" scale="1.000000"/>
+	</SceneryObject>
+</FSData>
+
