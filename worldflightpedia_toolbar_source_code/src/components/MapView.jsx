@@ -8,6 +8,7 @@
  * - Automatic route planning using nearest neighbor algorithm
  * - POI markers and Wikipedia integration
  * - Visited route tracking with visual feedback
+ * - Communicate ordered POI coordinates to the WASM module via callback
  * 
  * @component
  * @param {Array} pois - Array of Points of Interest to display
@@ -28,7 +29,15 @@ import { createRoot } from "react-dom/client";
 import palette from "../theme/palette";
 import MapPopupWikipedia from "./MapPopupWikipedia";
 
-export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSelectedPoi, setPois, setUserCoords }) {
+export default function MapView({ 
+    pois = [], 
+    userCoords = {}, 
+    selectedPoi, 
+    setSelectedPoi, 
+    setPois, 
+    setUserCoords,
+    onSendToWasm // Callback function to send data to WASM
+}) {
     // Map and layer references
     const containerRef = useRef(null);
     const mapRef = useRef(null);
@@ -78,6 +87,10 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
      * @param {Object} start - Starting coordinates {lat, lon}
      * @param {Array} points - Array of POI objects with lat/lon
      * @returns {Array} Ordered array of POIs for optimal route
+     */
+    /**
+     * Orders POIs using nearest neighbor heuristic from a starting coordinate.
+     * Complexity ~ O(n^2), good enough for small/medium lists.
      */
     const nearestNeighborOrder = useCallback((start, points) => {
       if (!start || !Array.isArray(points)) return [];
@@ -270,6 +283,19 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
           const planePos = marker.getLatLng();
           const targetPos = [target.lat, target.lon];
 
+          // Notify MSFS via L:var to indicate we've reached the next POI
+          try {
+              SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 1);
+              console.log("L:WFP_NextPoi 1");
+              setTimeout(() => {
+                SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 0);
+                console.log("L:WFP_NextPoi 0");
+              }, 1000);
+            
+          } catch (e) {
+            console.warn("[MapView] Error setting L:WFP_NextPoi", e);
+          }
+
           // Completed segment in red
           const completedSegment = L.polyline([[planePos.lat, planePos.lng], targetPos], {
             color: "#ff0000",
@@ -347,12 +373,80 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
         }
     };
 
+  /**
+   * Sends POI coordinates to WASM module via callback
+   * Orders POIs by shortest path (nearest neighbor) starting from provided start
+   * Creates JSON with only lat/lon for each POI
+   * @param {Array} poisArray - Array of POI objects
+   * @param {{lat:number, lon:number}} [start] - Optional starting coordinate
+   */
+  /**
+   * Sends POIs ordered by shortest path to WASM via provided callback.
+   * Falls back to current plane or userCoords if no explicit start is given.
+   */
+  const sendPoisToWasm = useCallback((poisArray, start) => {
+    if (!onSendToWasm || typeof onSendToWasm !== 'function') {
+      console.warn("[MapView] onSendToWasm callback not provided");
+      return;
+    }
+
+    try {
+      // Determine start position: prefer explicit start, else plane marker, else userCoords
+      let startLat, startLon;
+      if (start && typeof start.lat === 'number' && typeof start.lon === 'number') {
+        startLat = start.lat; startLon = start.lon;
+      } else {
+        const planeLatLng = planeMarkerRef.current?.getLatLng?.();
+        if (planeLatLng) {
+          startLat = planeLatLng.lat; startLon = planeLatLng.lng;
+        } else if (typeof userCoords.lat === 'number' && typeof userCoords.lon === 'number') {
+          startLat = userCoords.lat; startLon = userCoords.lon;
+        }
+      }
+
+      const startCoord = (typeof startLat === 'number' && typeof startLon === 'number')
+        ? { lat: startLat, lon: startLon }
+        : null;
+
+      // Filter to valid coordinate objects
+      const validPois = Array.isArray(poisArray)
+        ? poisArray.filter(p => typeof p?.lat === 'number' && typeof p?.lon === 'number')
+        : [];
+
+      // Order using nearest neighbor if we have a starting point
+      const ordered = startCoord ? nearestNeighborOrder(startCoord, validPois) : validPois;
+
+      // Create simplified JSON with only coordinates
+      const poisCoordinates = ordered.map(poi => ({ lat: poi.lat, lon: poi.lon }));
+
+      // Create payload for WASM
+      const payload = {
+        type: "POI_COORDINATES",
+        data: poisCoordinates,
+        count: poisCoordinates.length
+      };
+
+      console.log("[MapView] Sending ORDERED POI coordinates to WASM:", payload);
+
+      // Send via callback to WasmViewCommunicationDebug
+      onSendToWasm("OnMessageFromJs", payload);
+      console.log("[MapView] Ordered POI coordinates sent successfully");
+    } catch (err) {
+      console.error("[MapView] Error preparing ordered POIs for WASM:", err);
+    }
+  }, [onSendToWasm, nearestNeighborOrder, userCoords]);
+
     /**
      * Fetches POIs around current plane position using Wikipedia geosearch API
      * Integrates with MSFS SimVar to get real-time plane coordinates
+     * Sends POI coordinates to WASM module via CommBus
      * @async
      */
-    const fetchPoisAroundPlane = useCallback(async () => {
+  /**
+   * Fetches POIs around current plane position from Wikipedia and sends them to WASM
+   * ordered by nearest-neighbor from the current plane position.
+   */
+  const fetchPoisAroundPlane = useCallback(async () => {
         try {
             // Get plane coordinates from MSFS SimVar
             const lat = SimVar.GetSimVarValue("PLANE LATITUDE", "degrees");
@@ -365,10 +459,15 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
             // Wikipedia geosearch API
             const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=5000&gslimit=10&format=json&origin=*`;
             
-            const res = await fetch(url);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Wikipedia API error: ${res.status}`);
             const data = await res.json();
             if (data.query?.geosearch) {
-                setPois(data.query.geosearch);
+        const fetchedPois = data.query.geosearch;
+        setPois(fetchedPois);
+
+        // Send ordered POI coordinates to WASM using current plane position as start
+        sendPoisToWasm(fetchedPois, { lat, lon });
             }
         } catch (err) {
             console.error("Error fetching POIs:", err);
@@ -483,7 +582,7 @@ export default function MapView({ pois = [], userCoords = {}, selectedPoi, setSe
          * Custom Leaflet Control: Fetch Nearby POIs
          * Triggers Wikipedia search for POIs near current plane position
          */
-        const FetchPoisControl = L.Control.extend({
+  const FetchPoisControl = L.Control.extend({
             options: { position: "topleft" },
             onAdd: function(map) {
                 const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");

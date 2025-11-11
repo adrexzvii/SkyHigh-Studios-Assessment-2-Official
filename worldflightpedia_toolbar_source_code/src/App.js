@@ -1,26 +1,52 @@
 /**
  * App.js - Main Application Component
  * 
- * Root component for the WorldFlightPedia application.
- * Manages global state for POIs, user coordinates, and selected POI.
+ * Responsibilities:
+ * - Root component orchestrating the application layout and data flow
+ * - Manage global state: POIs list, selected POI, user/plane coordinates
+ * - Wire MapView to WasmViewCommunicationDebug via ref-based callback
+ * - Provide two-panel layout: sidebar (POI list + WASM debug) and map
+ * 
+ * Architecture:
+ * - MapView computes ordered routes and sends JSON to WASM via handleSendToWasm
+ * - WasmView acts as a centralized communication bridge (headless by default)
+ * - TopBar provides MSFS integration buttons (show/hide POIs, start/stop flight, load plan)
  * 
  * @component
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Box } from "@mui/material";
 import palette from "./theme/palette";
 import SearchPanel from "./components/SearchPanel";
 import PoiList from "./components/PoiList";
 import MapView from "./components/MapView";
 import TopBar from "./components/TopBar";
+import  WasmViewCommunicationDebug  from "./components/WasmViewCommunicationDebug";
 
 export default function App() {
-  // State management for POIs and user data
+  // Global state: POI list, selected POI, and user/plane coordinates
   const [pois, setPois] = useState([]);
   const [selectedPoi, setSelectedPoi] = useState(null);
-  const [userCoords, setUserCoords] = useState({ lat: -17.389, lon: -66.156 }); // Default: Bolivia
-  const [username, setUsername] = useState("");
+  const [userCoords, setUserCoords] = useState({ lat: -17.389, lon: -66.156 }); // Default: Cochabamba, Bolivia
+  
+  // Reference to WasmViewCommunicationDebug component for imperative API access
+  const wasmDebugRef = useRef(null);
+
+  /**
+   * Callback to send data to WASM module via the centralized bridge.
+   * Checks readiness before sending; logs warning if not ready.
+   * 
+   * @param {string} eventName - WASM event identifier (e.g., "OnMessageFromJs")
+   * @param {Object} payload - Data payload to send to WASM
+   */
+  const handleSendToWasm = useCallback((eventName, payload) => {
+    if (wasmDebugRef.current && wasmDebugRef.current.isReady()) {
+      wasmDebugRef.current.sendToWasm(eventName, payload);
+    } else {
+      console.warn("[App] WASM communication not ready yet; ensure CommBus is initialized");
+    }
+  }, []);
 
   return (
     <Box 
@@ -57,10 +83,13 @@ export default function App() {
             overflow: "hidden"
           }}
         >
-          {/* Search Panel - Currently commented out */}
+          {/* Search Panel - Currently disabled; manual fetch via map control */}
           {/* <SearchPanel setPois={setPois} setUserCoords={setUserCoords} /> */}
           
-          {/* POI List */}
+          {/* WASM Communication Debug Panel (headless by default; UI commented out) */}
+          <WasmViewCommunicationDebug ref={wasmDebugRef} />
+          
+          {/* POI List: displays fetched POIs with selection */}
           <PoiList pois={pois} setSelectedPoi={setSelectedPoi} />
         </Box>
 
@@ -73,6 +102,7 @@ export default function App() {
             setSelectedPoi={setSelectedPoi}
             setPois={setPois}
             setUserCoords={setUserCoords}
+            onSendToWasm={handleSendToWasm}
           />
         </div>
       </Box>

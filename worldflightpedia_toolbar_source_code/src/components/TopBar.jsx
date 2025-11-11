@@ -1,10 +1,16 @@
 /**
  * TopBar.jsx - Application Top Navigation Bar
  * 
- * Provides the main navigation and actions for the application:
- * - Save/Load flight plans
- * - Help dialog
- * - Integration with Microsoft Flight Simulator (MSFS) Coherent engine
+ * Responsibilities:
+ * - Provide UI controls for saving and loading flight plans
+ * - Toggle MSFS L:vars for spawning POIs and starting flight tracking
+ * - Integrate with MSFS Coherent engine for loading .pln files
+ * - Display help dialog for user guidance
+ * 
+ * Notes:
+ * - All SimVar and engine calls are guarded to avoid errors outside MSFS
+ * - State toggles are optimistic (UI updates immediately; MSFS is source of truth)
+ * - The commented-out pause logic is preserved for future use if needed
  * 
  * @component
  */
@@ -30,7 +36,42 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import palette from '../theme/palette';
 
 export default function TopBar() {
+    // Help dialog visibility
     const [helpOpen, setHelpOpen] = React.useState(false);
+    
+    // Tracks whether all POIs should be spawned in MSFS (backed by L:spawnAllLasersRed)
+    const [spawnAllPois, setSpawnAllPois] = React.useState(false);
+    // Tracks whether sim is currently paused via K:PAUSE_SET
+    // const [paused, setPaused] = React.useState(false);
+    // Tracks whether flight is started (backed by L:WFP_StartFlight)
+    const [flightStarted, setFlightStarted] = React.useState(false);
+
+    // Toggle MSFS custom L:var to show/hide all POIs in the simulator
+    const handleToggleAllPois = () => {
+        const newVal = spawnAllPois ? 0 : 1;
+        try {
+        SimVar.SetSimVarValue("L:spawnAllLasersRed", "Bool", newVal);
+            
+        } catch (e) {
+            console.error("[TopBar] Error setting L:spawnAllLasersRed:", e);
+        } finally {
+            // Reflect desired state in UI regardless; in-sim it will be the source of truth
+            setSpawnAllPois((prev) => !prev);
+        }
+    };
+
+    // Toggle MSFS custom L:var to start/stop flight tracking
+    const handleToggleStartFlight = () => {
+        const newVal = flightStarted ? 0 : 1;
+        try {
+            SimVar.SetSimVarValue("L:WFP_StartFlight", "Bool", newVal);
+        } catch (e) {
+            console.error("[TopBar] Error setting L:WFP_StartFlight:", e);
+        } finally {
+            // Reflect desired state in UI regardless; in-sim it will be the source of truth
+            setFlightStarted((prev) => !prev);
+        }
+    };
 
     /**
      * Saves the current flight plan to localStorage
@@ -39,7 +80,7 @@ export default function TopBar() {
         try {
             const flightPlanData = {
                 timestamp: new Date().toISOString(),
-                // Add your flight plan data structure here
+                // Add your flight plan data structure here (e.g., pois, route)
             };
             
             localStorage.setItem('flightPlan', JSON.stringify(flightPlanData));
@@ -59,6 +100,17 @@ export default function TopBar() {
         console.log("Attempting to load flight plan");
         
         try {
+            // // Toggle simulator pause state using K: event when loading
+            // try {
+            //     const newPauseVal = paused ? 0 : 1;
+            //     // K: events accept a numeric/bool value parameter
+            //     SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", newPauseVal);
+            // } catch (pauseErr) {
+            //     console.warn("[TopBar] Unable to toggle K:PAUSE_SET:", pauseErr);
+            // } finally {
+            //     setPaused(prev => !prev);
+            // }
+
             console.log("Inside try block");
             const engineTrigger = engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
             console.log("After ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN:", engineTrigger);
@@ -121,6 +173,30 @@ export default function TopBar() {
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title="Show/Hide all POIs in MSFS">
+                        <Button
+                            onClick={handleToggleAllPois}
+                            sx={{
+                                color: palette.textPrimary,
+                                '&:hover': { bgcolor: palette.accentHover },
+                            }}
+                        >
+                            {spawnAllPois ? 'Hide all POIs in MSFS' : 'Show all POIs in MSFS'}
+                        </Button>
+                    </Tooltip>
+
+                    <Tooltip title="Start/Stop Flight Tracking">
+                        <Button
+                            onClick={handleToggleStartFlight}
+                            sx={{
+                                color: palette.textPrimary,
+                                '&:hover': { bgcolor: palette.accentHover },
+                            }}
+                        >
+                            {flightStarted ? 'Stop Flight' : 'Start Flight'}
+                        </Button>
+                    </Tooltip>
+
                     <Tooltip title="Save Flight Plan">
                         <Button
                             startIcon={<SaveIcon />}
