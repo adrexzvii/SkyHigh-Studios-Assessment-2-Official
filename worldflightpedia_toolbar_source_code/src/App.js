@@ -18,7 +18,6 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Box } from "@mui/material";
 import palette from "./theme/palette";
-import SearchPanel from "./components/SearchPanel";
 import PoiList from "./components/PoiList";
 import MapView from "./components/MapView";
 import TopBar from "./components/TopBar";
@@ -83,8 +82,6 @@ export default function App() {
             overflow: "hidden"
           }}
         >
-          {/* Search Panel - Currently disabled; manual fetch via map control */}
-          {/* <SearchPanel setPois={setPois} setUserCoords={setUserCoords} /> */}
           
           {/* WASM Communication Debug Panel (headless by default; UI commented out) */}
           <WasmViewCommunicationDebug ref={wasmDebugRef} />
