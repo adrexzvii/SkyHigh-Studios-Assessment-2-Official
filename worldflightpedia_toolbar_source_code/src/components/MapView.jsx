@@ -29,7 +29,7 @@ import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { createRoot } from "react-dom/client";
 import palette from "../theme/palette";
-import MapPopupWikipedia from "./MapPopupWikipedia";
+import MapPopupWikipedia from "./MapPopupWikipedia/MapPopupWikipedia";
 
 export default function MapView({ 
     pois = [], 
