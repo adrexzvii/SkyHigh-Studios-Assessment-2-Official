@@ -2,15 +2,15 @@
  * TopBar.jsx - Application Top Navigation Bar
  * 
  * Responsibilities:
- * - Provide UI controls for saving and loading flight plans
- * - Toggle MSFS L:vars for spawning POIs and starting flight tracking
- * - Integrate with MSFS Coherent engine for loading .pln files
- * - Display help dialog for user guidance
+ * - Toggle MSFS custom L:vars (spawn POIs, start/stop flight tracking)
+ * - Display contextual help dialog
+ * 
+ * Removed features:
+ * - Save/Load flight plan actions and Coherent LOAD_FLIGHTPLAN integration have been removed per request.
  * 
  * Notes:
- * - All SimVar and engine calls are guarded to avoid errors outside MSFS
- * - State toggles are optimistic (UI updates immediately; MSFS is source of truth)
- * - The commented-out pause logic is preserved for future use if needed
+ * - SimVar calls are guarded implicitly via try/catch blocks.
+ * - State toggles are optimistic; simulator remains source of truth.
  * 
  * @component
  */
@@ -30,8 +30,6 @@ import {
     ListItem,
     ListItemText 
 } from '@mui/material';
-import SaveIcon from '@mui/icons-material/Save';
-import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import palette from '../theme/palette';
 
@@ -41,8 +39,6 @@ export default function TopBar() {
     
     // Tracks whether all POIs should be spawned in MSFS (backed by L:spawnAllLasersRed)
     const [spawnAllPois, setSpawnAllPois] = React.useState(false);
-    // Tracks whether sim is currently paused via K:PAUSE_SET
-    // const [paused, setPaused] = React.useState(false);
     // Tracks whether flight is started (backed by L:WFP_StartFlight)
     const [flightStarted, setFlightStarted] = React.useState(false);
 
@@ -73,61 +69,6 @@ export default function TopBar() {
         }
     };
 
-    /**
-     * Saves the current flight plan to localStorage
-     */
-    const handleSaveFlightPlan = () => {
-        try {
-            const flightPlanData = {
-                timestamp: new Date().toISOString(),
-                // Add your flight plan data structure here (e.g., pois, route)
-            };
-            
-            localStorage.setItem('flightPlan', JSON.stringify(flightPlanData));
-            // Could add success notification here
-        } catch (error) {
-            console.error('Error saving flight plan:', error);
-            // Could add error handling UI here
-        }
-    };
-    
-    /**
-     * Loads a flight plan - attempts to use MSFS Coherent API or opens native dialog
-     * Note: This is specific to Microsoft Flight Simulator integration
-     */
-    const handleLoadFlightPlan = () => {
-        const path = "C:/Users/adria/Downloads/SLCBSLVR_MFS_29Oct25.pln";
-        console.log("Attempting to load flight plan");
-        
-        try {
-            // // Toggle simulator pause state using K: event when loading
-            // try {
-            //     const newPauseVal = paused ? 0 : 1;
-            //     // K: events accept a numeric/bool value parameter
-            //     SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", newPauseVal);
-            // } catch (pauseErr) {
-            //     console.warn("[TopBar] Unable to toggle K:PAUSE_SET:", pauseErr);
-            // } finally {
-            //     setPaused(prev => !prev);
-            // }
-
-            console.log("Inside try block");
-            const engineTrigger = engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
-            console.log("After ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN:", engineTrigger);
-            
-            // Try to load using Coherent API (MSFS specific)
-            Coherent.call("LOAD_FLIGHTPLAN", path)
-                .then(() => console.log("Flight plan loaded:", path))
-                .catch((err) => {
-                    console.warn("LOAD_FLIGHTPLAN not available or failed:", err);
-                    // Fallback: Open native Load/Save dialog
-                    engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
-                });
-        } catch (e) {
-            console.warn("Coherent not available in this environment. Opening dialog:", e);
-            engine.trigger("ASK_LOAD_SAVE_CUSTOM_FLIGHTPLAN");
-        }
-    };
 
     /**
      * Opens the help dialog
@@ -196,37 +137,6 @@ export default function TopBar() {
                             {flightStarted ? 'Stop Flight' : 'Start Flight'}
                         </Button>
                     </Tooltip>
-
-                    <Tooltip title="Save Flight Plan">
-                        <Button
-                            startIcon={<SaveIcon />}
-                            onClick={handleSaveFlightPlan}
-                            sx={{
-                                color: palette.textPrimary,
-                                '&:hover': {
-                                    bgcolor: palette.accentHover,
-                                },
-                            }}
-                        >
-                            Save Plan
-                        </Button>
-                    </Tooltip>
-
-                    <Tooltip title="Load Flight Plan">
-                        <Button
-                            startIcon={<DownloadIcon />}
-                            onClick={handleLoadFlightPlan}
-                            sx={{
-                                color: palette.textPrimary,
-                                '&:hover': {
-                                    bgcolor: palette.accentHover,
-                                },
-                            }}
-                        >
-                            Load Plan
-                        </Button>
-                    </Tooltip>
-
                     <Tooltip title="Help">
                         <IconButton
                             onClick={handleHelpClick}
@@ -260,20 +170,6 @@ export default function TopBar() {
                 </DialogTitle>
                 <DialogContent>
                     <List>
-                        <ListItem>
-                            <ListItemText 
-                                primary="Save Flight Plan"
-                                secondary="Saves your current flight plan locally"
-                                secondaryTypographyProps={{ color: palette.textSecondary }}
-                            />
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText 
-                                primary="Load Flight Plan"
-                                secondary="Loads your previously saved flight plan"
-                                secondaryTypographyProps={{ color: palette.textSecondary }}
-                            />
-                        </ListItem>
                         {/* Add more help items as needed */}
                     </List>
                 </DialogContent>
