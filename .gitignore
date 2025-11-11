@@ -24,3 +24,5 @@ yarn-error.log*
 
 _PackageInt/
 PackagesMetadata/
+\n+# Visual Studio workspace artifacts (ignore .vs folder for WASM module)
+worldFlightPedia_wasm_module/.vs/
