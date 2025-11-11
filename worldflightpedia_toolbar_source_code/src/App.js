@@ -22,7 +22,6 @@ import palette from "./theme/palette";
 import PoiList from "./components/PoiList/PoiList";
 import MapView from "./components/MapView";
 import TopBar from "./components/TopBar/TopBar";
-import  WasmViewCommunicationDebug  from "./components/WasmViewCommunicationDebug";
 
 export default function App() {
   // Global state: POI list, selected POI, and user/plane coordinates
