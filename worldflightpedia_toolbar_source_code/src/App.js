@@ -21,7 +21,7 @@ import { PoiProvider } from "./components/context/PoiContext";
 import palette from "./theme/palette";
 import PoiList from "./components/PoiList/PoiList";
 import MapView from "./components/MapView";
-import TopBar from "./components/TopBar";
+import TopBar from "./components/TopBar/TopBar";
 import  WasmViewCommunicationDebug  from "./components/WasmViewCommunicationDebug";
 
 export default function App() {
