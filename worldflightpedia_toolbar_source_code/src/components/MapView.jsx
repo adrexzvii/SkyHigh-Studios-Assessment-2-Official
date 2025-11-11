@@ -59,7 +59,9 @@ export default function MapView({
     // Flight tracking state
     const [followPlane, setFollowPlane] = useState(true);
     const followRef = useRef(followPlane);
-    const updateFollowButtonRef = useRef(null); // Reference to button update function
+  const updateFollowButtonRef = useRef(null); // Reference to button update function
+  const updatePauseButtonRef = useRef(null);  // Reference to pause/play button update function
+  const pauseBlinkIntervalRef = useRef(null); // Interval for paused blinking effect
     
     // Route planning state
     const [remainingPois, setRemainingPois] = useState([]);
@@ -297,6 +299,19 @@ export default function MapView({
             
           } catch (e) {
             console.warn("[MapView] Error setting L:WFP_NextPoi", e);
+          }
+
+          // Auto-pause simulator when reaching a POI and sync UI
+          try {
+            if (typeof SimVar?.SetSimVarValue === 'function') {
+              SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", 1);
+            }
+            pauseRef.current = true;
+            if (typeof updatePauseButtonRef.current === 'function') {
+              try { updatePauseButtonRef.current(); } catch (_) {}
+            }
+          } catch (e) {
+            console.warn("[MapView] Error auto-pausing on POI arrival", e);
           }
 
           // Completed segment in red
@@ -650,7 +665,35 @@ export default function MapView({
           }));
           btn.title = isPaused ? "Resume simulator" : "Pause simulator";
         };
-        renderIcon();
+        // Start/stop a green/white blinking effect while paused
+        const applyBlinking = () => {
+          const isPaused = pauseRef.current;
+          // Clear any previous blink interval
+          if (pauseBlinkIntervalRef.current) {
+            try { clearInterval(pauseBlinkIntervalRef.current); } catch (_) {}
+            pauseBlinkIntervalRef.current = null;
+          }
+          // When paused: blink between green and white every 1s
+          if (isPaused) {
+            let green = true;
+            btn.style.backgroundColor = "#00b050"; // initial green
+            pauseBlinkIntervalRef.current = setInterval(() => {
+              green = !green;
+              btn.style.backgroundColor = green ? "#00b050" : "#fff";
+            }, 1000);
+          } else {
+            // Not paused: ensure default background
+            btn.style.backgroundColor = "#fff";
+          }
+        };
+        const updatePauseUI = () => {
+          renderIcon();
+          applyBlinking();
+        };
+        updatePauseUI();
+
+        // Expose an external updater so logic can sync UI when pausing automatically
+        updatePauseButtonRef.current = updatePauseUI;
 
         L.DomEvent.on(btn, "click", (e) => {
           L.DomEvent.stopPropagation(e);
@@ -663,7 +706,7 @@ export default function MapView({
               console.warn("[MapView] SimVar not available to toggle pause");
             }
             pauseRef.current = newPaused;
-            renderIcon();
+            updatePauseUI();
           } catch (err) {
             console.warn("[MapView] Failed to toggle pause state", err);
           }
@@ -699,6 +742,11 @@ export default function MapView({
       if (resizeObserverRef.current) {
         try { resizeObserverRef.current.disconnect(); } catch (_) {}
         resizeObserverRef.current = null;
+      }
+      // Clear blinking interval if active
+      if (pauseBlinkIntervalRef.current) {
+        try { clearInterval(pauseBlinkIntervalRef.current); } catch (_) {}
+        pauseBlinkIntervalRef.current = null;
       }
       map.remove();
             mapRef.current = null;
