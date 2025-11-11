@@ -25,6 +25,8 @@ import "leaflet/dist/leaflet.css";
 import { Box } from "@mui/material";
 import FlightIcon from "@mui/icons-material/Flight";
 import SearchIcon from "@mui/icons-material/Search";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { createRoot } from "react-dom/client";
 import palette from "../theme/palette";
 import MapPopupWikipedia from "./MapPopupWikipedia";
@@ -52,6 +54,7 @@ export default function MapView({
     const loopRef = useRef(null); // Singleton interval for real-time updates
     const orderedRouteRef = useRef([]); // Mirror of orderedRoute for the loop
     const currentSegmentLineRef = useRef(null); // The actual polyline for current segment
+  const pauseRef = useRef(false); // Track local pause state for pause/play control
     
     // Flight tracking state
     const [followPlane, setFollowPlane] = useState(true);
@@ -619,9 +622,63 @@ export default function MapView({
             }
         });
 
+    /**
+     * Custom Leaflet Control: Pause/Play Simulator
+     * Toggles MSFS pause state via K:PAUSE_SET event (Bool 0/1)
+     */
+    const PausePlayControl = L.Control.extend({
+      options: { position: "topleft" },
+      onAdd: function() {
+        const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+        const btn = L.DomUtil.create("div", "", container);
+        btn.title = "Pause/Resume simulator";
+        btn.style.width = "30px";
+        btn.style.height = "30px";
+        btn.style.display = "flex";
+        btn.style.alignItems = "center";
+        btn.style.justifyContent = "center";
+        btn.style.cursor = "pointer";
+        btn.style.backgroundColor = "#fff";
+        btn.setAttribute('aria-label', 'Pause or resume simulator');
+
+        const root = createRoot(btn);
+
+        const renderIcon = () => {
+          const isPaused = pauseRef.current;
+          root.render(React.createElement(isPaused ? PlayArrowIcon : PauseIcon, {
+            style: { fontSize: "18px", color: "#000" }
+          }));
+          btn.title = isPaused ? "Resume simulator" : "Pause simulator";
+        };
+        renderIcon();
+
+        L.DomEvent.on(btn, "click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          L.DomEvent.preventDefault(e);
+          const newPaused = !pauseRef.current; // true means we will request pause (1)
+          try {
+            if (typeof SimVar?.SetSimVarValue === 'function') {
+              SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", newPaused ? 1 : 0);
+            } else {
+              console.warn("[MapView] SimVar not available to toggle pause");
+            }
+            pauseRef.current = newPaused;
+            renderIcon();
+          } catch (err) {
+            console.warn("[MapView] Failed to toggle pause state", err);
+          }
+        });
+
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.disableScrollPropagation(container);
+        return container;
+      }
+    });
+
     // Add custom controls to map
-        new FollowControl().addTo(mapRef.current);
-        new FetchPoisControl().addTo(mapRef.current);
+  new FollowControl().addTo(mapRef.current);
+  new FetchPoisControl().addTo(mapRef.current);
+  new PausePlayControl().addTo(mapRef.current);
 
     // Force initial size calculation (container may have been hidden/sized late)
     try { map.invalidateSize(); } catch (_) {}
