@@ -30,16 +30,18 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { createRoot } from "react-dom/client";
 import palette from "../theme/palette";
 import MapPopupWikipedia from "./MapPopupWikipedia/MapPopupWikipedia";
+import { usePoiContext } from "../components/context/PoiContext";
 
 export default function MapView({ 
-    pois = [], 
+    // pois = [], 
     userCoords = {}, 
-    selectedPoi, 
-    setSelectedPoi, 
-    setPois, 
+    // selectedPoi, 
+    // setSelectedPoi, 
+    // setPois, 
     setUserCoords,
     onSendToWasm // Callback function to send data to WASM
 }) {
+    const { pois = [], selectedPoi, setSelectedPoi, setPois } = usePoiContext();
     // Map and layer references
     const containerRef = useRef(null);
     const mapRef = useRef(null);

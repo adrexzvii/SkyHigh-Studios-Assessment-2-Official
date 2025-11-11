@@ -17,8 +17,9 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Box } from "@mui/material";
+import { PoiProvider } from "./components/context/PoiContext";
 import palette from "./theme/palette";
-import PoiList from "./components/PoiList";
+import PoiList from "./components/PoiList/PoiList";
 import MapView from "./components/MapView";
 import TopBar from "./components/TopBar";
 import  WasmViewCommunicationDebug  from "./components/WasmViewCommunicationDebug";
@@ -48,6 +49,7 @@ export default function App() {
   }, []);
 
   return (
+    <PoiProvider>
     <Box 
       sx={{ 
         alignSelf: "flex-start", 
@@ -87,22 +89,26 @@ export default function App() {
           <WasmViewCommunicationDebug ref={wasmDebugRef} />
           
           {/* POI List: displays fetched POIs with selection */}
-          <PoiList pois={pois} setSelectedPoi={setSelectedPoi} />
+          <PoiList 
+          // pois={pois} 
+          // setSelectedPoi={setSelectedPoi} 
+          />
         </Box>
 
         {/* Right Side: Map View with POI markers and route planning */}
         <div style={{ width: "100%", height: "100%" }}>
           <MapView
-            pois={pois}
+            // pois={pois}
             userCoords={userCoords}
-            selectedPoi={selectedPoi}
-            setSelectedPoi={setSelectedPoi}
-            setPois={setPois}
+            // selectedPoi={selectedPoi}
+            // setSelectedPoi={setSelectedPoi}
+            // setPois={setPois}
             setUserCoords={setUserCoords}
             onSendToWasm={handleSendToWasm}
           />
         </div>
       </Box>
     </Box>
+    </PoiProvider>
   );
 }
