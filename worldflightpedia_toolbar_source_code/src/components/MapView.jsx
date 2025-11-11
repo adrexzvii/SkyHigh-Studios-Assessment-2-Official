@@ -31,17 +31,16 @@ import { createRoot } from "react-dom/client";
 import palette from "../theme/palette";
 import MapPopupWikipedia from "./MapPopupWikipedia/MapPopupWikipedia";
 import { usePoiContext } from "../components/context/PoiContext";
+import { useCommBus } from "../hooks/useCommBus";
 
 export default function MapView({ 
-    // pois = [], 
+    
     userCoords = {}, 
-    // selectedPoi, 
-    // setSelectedPoi, 
-    // setPois, 
     setUserCoords,
-    onSendToWasm // Callback function to send data to WASM
+    // onSendToWasm // Callback function to send data to WASM
 }) {
     const { pois = [], selectedPoi, setSelectedPoi, setPois } = usePoiContext();
+    const { send, isReady } = useCommBus();
     // Map and layer references
     const containerRef = useRef(null);
     const mapRef = useRef(null);
@@ -405,8 +404,8 @@ export default function MapView({
    * Falls back to current plane or userCoords if no explicit start is given.
    */
   const sendPoisToWasm = useCallback((poisArray, start) => {
-    if (!onSendToWasm || typeof onSendToWasm !== 'function') {
-      console.warn("[MapView] onSendToWasm callback not provided");
+    if (!isReady){
+      console.warn("[Mapview] CommBus not ready yet");
       return;
     }
 
@@ -446,15 +445,15 @@ export default function MapView({
         count: poisCoordinates.length
       };
 
-      console.log("[MapView] Sending ORDERED POI coordinates to WASM:", payload);
+      console.log("[MapView] Sending ORDERED POI coordinates to WASM Final Versioooon:", payload);
 
-      // Send via callback to WasmViewCommunicationDebug
-      onSendToWasm("OnMessageFromJs", payload);
+      // Send via callback trough useCommBus hook
+      send("OnMessageFromJs", payload);
       console.log("[MapView] Ordered POI coordinates sent successfully");
     } catch (err) {
       console.error("[MapView] Error preparing ordered POIs for WASM:", err);
     }
-  }, [onSendToWasm, nearestNeighborOrder, userCoords]);
+  }, [send, nearestNeighborOrder, userCoords, isReady]);
 
     /**
      * Fetches POIs around current plane position using Wikipedia geosearch API
@@ -467,6 +466,8 @@ export default function MapView({
    * ordered by nearest-neighbor from the current plane position.
    */
   const fetchPoisAroundPlane = useCallback(async () => {
+    // Avoid sending/processing route payloads until CommBus is ready
+    if (!isReady) return;
         try {
             // Get plane coordinates from MSFS SimVar
             const lat = SimVar.GetSimVarValue("PLANE LATITUDE", "degrees");
@@ -493,7 +494,7 @@ export default function MapView({
             console.error("Error fetching POIs:", err);
             setPois([]);
         }
-    }, [setPois, setUserCoords]);
+  }, [setPois, setUserCoords, isReady]);
 
     /**
      * Initialize Leaflet map with custom controls and plane marker

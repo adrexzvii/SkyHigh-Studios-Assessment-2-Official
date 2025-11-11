@@ -31,7 +31,7 @@ export default function App() {
   const [userCoords, setUserCoords] = useState({ lat: -17.389, lon: -66.156 }); // Default: Cochabamba, Bolivia
   
   // Reference to WasmViewCommunicationDebug component for imperative API access
-  const wasmDebugRef = useRef(null);
+  // const wasmDebugRef = useRef(null);
 
   /**
    * Callback to send data to WASM module via the centralized bridge.
@@ -40,13 +40,13 @@ export default function App() {
    * @param {string} eventName - WASM event identifier (e.g., "OnMessageFromJs")
    * @param {Object} payload - Data payload to send to WASM
    */
-  const handleSendToWasm = useCallback((eventName, payload) => {
-    if (wasmDebugRef.current && wasmDebugRef.current.isReady()) {
-      wasmDebugRef.current.sendToWasm(eventName, payload);
-    } else {
-      console.warn("[App] WASM communication not ready yet; ensure CommBus is initialized");
-    }
-  }, []);
+  // const handleSendToWasm = useCallback((eventName, payload) => {
+  //   if (wasmDebugRef.current && wasmDebugRef.current.isReady()) {
+  //     wasmDebugRef.current.sendToWasm(eventName, payload);
+  //   } else {
+  //     console.warn("[App] WASM communication not ready yet; ensure CommBus is initialized");
+  //   }
+  // }, []);
 
   return (
     <PoiProvider>
@@ -86,25 +86,22 @@ export default function App() {
         >
           
           {/* WASM Communication Debug Panel (headless by default; UI commented out) */}
-          <WasmViewCommunicationDebug ref={wasmDebugRef} />
+          {/* <WasmViewCommunicationDebug ref={wasmDebugRef} /> */}
           
           {/* POI List: displays fetched POIs with selection */}
           <PoiList 
-          // pois={pois} 
-          // setSelectedPoi={setSelectedPoi} 
+          
           />
         </Box>
 
         {/* Right Side: Map View with POI markers and route planning */}
         <div style={{ width: "100%", height: "100%" }}>
           <MapView
-            // pois={pois}
+            
             userCoords={userCoords}
-            // selectedPoi={selectedPoi}
-            // setSelectedPoi={setSelectedPoi}
-            // setPois={setPois}
+           
             setUserCoords={setUserCoords}
-            onSendToWasm={handleSendToWasm}
+            // onSendToWasm={handleSendToWasm}
           />
         </div>
       </Box>
