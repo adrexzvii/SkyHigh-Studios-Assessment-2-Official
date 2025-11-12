@@ -1,8 +1,8 @@
 ﻿  worldFlightPedia_wasm_module.cpp
-  In file included from worldFlightPedia_wasm_module.cpp:3:
+  In file included from worldFlightPedia_wasm_module.cpp:14:
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(905,15): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
 C:\MSFS SDK\WASM\include\MSFS/MSFS_WindowsTypes.h(129,21): message : expanded from macro 'CALLBACK'
-  In file included from worldFlightPedia_wasm_module.cpp:3:
+  In file included from worldFlightPedia_wasm_module.cpp:14:
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(907,1): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(901,42): message : expanded from macro 'SIMCONNECTAPI'
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(908,1): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
@@ -185,9 +185,9 @@ C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(996,1): warning : '__stdcall' ca
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(901,42): message : expanded from macro 'SIMCONNECTAPI'
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(997,1): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
 C:\MSFS SDK\SimConnect SDK\include\SimConnect.h(901,42): message : expanded from macro 'SIMCONNECTAPI'
-worldFlightPedia_wasm_module.cpp(43,6): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+worldFlightPedia_wasm_module.cpp(89,6): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
 C:\MSFS SDK\WASM\include\MSFS/MSFS_WindowsTypes.h(129,21): message : expanded from macro 'CALLBACK'
-worldFlightPedia_wasm_module.cpp(187,6): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+worldFlightPedia_wasm_module.cpp(216,15): warning : unused variable 'requestId' [-Wunused-variable]
+worldFlightPedia_wasm_module.cpp(470,6): warning : '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
 C:\MSFS SDK\WASM\include\MSFS/MSFS_WindowsTypes.h(129,21): message : expanded from macro 'CALLBACK'
-worldFlightPedia_wasm_module.cpp(10,21): warning : unused variable 'g_frameCounter' [-Wunused-variable]
   worldFlightPedia_wasm_module.vcxproj -> D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\worldFlightPedia_wasm_module.wasm
