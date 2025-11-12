@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { setSimVarSafe } from "../utils/simvarUtils";
+import { setSimVarSafe } from "../../utils/simvar/simvarUtils";
 
 /**
  * useSimVarToggle - Hook for toggling a MSFS boolean L:Var value

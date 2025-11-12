@@ -20,8 +20,8 @@ import { useState, useEffect } from "react";
 import { Card, CircularProgress } from "@mui/material";
 import MapPopupMinimized from "./MapPopupMinimized";
 import MapPopupCard from "./MapPopupCard";
-import { useWikipediaSummary } from "../../hooks/useWikipediaSummary";
-import { useDistance } from "../../hooks/useDistance";
+import { useWikipediaSummary } from "../../hooks/wiki/useWikipediaSummary";
+import { useDistance } from "../../hooks/map/useDistance";
 
 export default function MapPopupWikipedia({ poi, userCoords, onFocusPoi }) {
   // UI state management

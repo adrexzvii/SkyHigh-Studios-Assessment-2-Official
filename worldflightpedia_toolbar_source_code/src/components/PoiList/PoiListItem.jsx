@@ -15,7 +15,7 @@
 
 import { ListItemButton, ListItemText } from "@mui/material";
 import palette from "../../theme/palette";
-import { formatCoordinates } from "../../utils/formatCoordinates";
+import { formatCoordinates } from "../../utils/ui/formatCoordinates";
 
 export default function PoiListItem({ poi, onSelect }) {
   return (

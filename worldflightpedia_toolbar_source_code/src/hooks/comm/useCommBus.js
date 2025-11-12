@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { toPayloadString, safeCleanup } from "../utils/commbusUtils";
+import { toPayloadString, safeCleanup } from "../../utils/comm/commbusUtils";
 
 /**
  * useCommBus - React hook for MSFS CommBus communication with a WASM module

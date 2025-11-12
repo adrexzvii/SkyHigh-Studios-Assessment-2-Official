@@ -18,6 +18,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { fetchSummary } from "../../utils/wiki/wikipediaApi";
 
 export function useWikipediaSummary(title) {
   // Wikipedia API response data
@@ -34,25 +35,15 @@ export function useWikipediaSummary(title) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
-        // Fetch from Wikipedia REST API with encoded title
-        const res = await fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
-        );
-        const json = await res.json();
-        
-        // Store response data
+        const json = await fetchSummary(title);
         setData(json);
       } catch (err) {
-        // Log error and reset data on failure
         console.error("Wikipedia fetch error:", err);
         setData(null);
       } finally {
-        // Always reset loading state
         setLoading(false);
       }
     };
-    
     fetchData();
   }, [title]); // Re-fetch when title changes
 

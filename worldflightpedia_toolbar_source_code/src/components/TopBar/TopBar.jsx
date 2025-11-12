@@ -19,8 +19,8 @@ import React from "react";
 import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import palette from "../../theme/palette";
-import { useSimVarToggle } from "../../hooks/useSimVarToggle";
-import { useDialog } from "../../hooks/useDialog";
+import { useSimVarToggle } from "../../hooks/simvar/useSimVarToggle";
+import { useDialog } from "../../hooks/comm/useDialog";
 import HelpDialog from "./HelpDialog";
 
 export default function TopBar() {

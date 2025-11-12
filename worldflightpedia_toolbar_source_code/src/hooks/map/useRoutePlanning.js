@@ -1,0 +1,280 @@
+/**
+ * useRoutePlanning - Encapsulates POI normalization, route ordering, and live segment updates.
+ *
+ * Responsibilities:
+ * - Normalize incoming raw POIs into {id, lat, lon, title}
+ * - Compute an ordered route from current plane/user position using nearestNeighborOrder
+ * - Draw static (future) route segments and update a dynamic current segment polyline
+ * - Detect arrival at next POI, mark segment visited (red), trigger SimVars, auto-pause
+ *
+ * Returns route-related state for consumers while managing Leaflet layer groups internally.
+ *
+ * Inputs contract:
+ * @param {Object} params
+ * @param {import('react').MutableRefObject<any>} params.mapRef - Leaflet map ref
+ * @param {import('react').MutableRefObject<any>} params.planeMarkerRef - Plane marker ref
+ * @param {{lat?:number, lon?:number}} params.userCoords - Fallback user coordinates if plane marker not placed yet
+ * @param {Array<any>} params.pois - Raw POIs
+ * @param {Object} params.palette - Theme palette (optional accent color)
+ * @param {number} [params.arrivalThresholdKm=0.2] - Distance threshold to consider POI reached
+ * @param {function} [params.onArrive] - Optional callback when a POI is reached (receives POI)
+ * @param {import('react').MutableRefObject<boolean>} [params.pauseRef] - Ref to track pause state (syncs with UI button)
+ * @param {import('react').MutableRefObject<function>} [params.updatePauseButtonRef] - Ref to function that updates pause button UI
+ *
+ * Output:
+ * { remainingPois, orderedRoute, completedSegments }
+ */
+
+import { useState, useEffect, useRef } from "react";
+import L from "leaflet";
+import { nearestNeighborOrder, normalizePois } from "../../utils/geo/routeUtils";
+import { haversine } from "../../utils/geo/haversine";
+
+/**
+ * Main route-planning hook.
+ * @returns {{
+ *   remainingPois: Array<{id:string, lat:number, lon:number, title:string}>,
+ *   orderedRoute: Array<{id:string, lat:number, lon:number, title:string}>,
+ *   completedSegments: Array<{from:[number,number], to:[number,number]}>,
+ * }}
+ */
+export function useRoutePlanning({
+  mapRef,
+  planeMarkerRef,
+  userCoords,
+  pois,
+  palette,
+  arrivalThresholdKm = 0.2,
+  onArrive,
+  pauseRef,
+  updatePauseButtonRef
+}) {
+  const [remainingPois, setRemainingPois] = useState([]);
+  const [orderedRoute, setOrderedRoute] = useState([]);
+  const [completedSegments, setCompletedSegments] = useState([]);
+
+  // Internal refs for dynamic/static segments & visited tracking
+  const visitedIdsRef = useRef(new Set());
+  const currentSegmentGroupRef = useRef(null);
+  const staticSegmentsGroupRef = useRef(null);
+  const visitedSegmentsGroupRef = useRef(null);
+  const currentSegmentLineRef = useRef(null);
+  const routeMirrorRef = useRef([]); // Mirror orderedRoute for interval closure
+  const loopRef = useRef(null);
+
+  /** Normalize incoming POIs whenever raw list changes */
+  useEffect(() => {
+    const valid = normalizePois(pois);
+    setRemainingPois(valid);
+    setCompletedSegments([]);
+    if (visitedIdsRef.current) visitedIdsRef.current.clear();
+  }, [pois]);
+
+  /** Compute ordered route + draw dashed static segments */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Determine starting coordinate: plane marker > userCoords
+    let startLat, startLon;
+    const planeLatLng = planeMarkerRef.current?.getLatLng?.();
+    if (planeLatLng) {
+      startLat = planeLatLng.lat;
+      startLon = planeLatLng.lng;
+    } else if (typeof userCoords.lat === 'number' && typeof userCoords.lon === 'number') {
+      startLat = userCoords.lat;
+      startLon = userCoords.lon;
+    } else {
+      // Cannot start route yet (no position)
+      return;
+    }
+    const start = { lat: startLat, lon: startLon };
+
+    if (!remainingPois || remainingPois.length === 0) {
+      setOrderedRoute([]);
+      // Clear groups if exist
+      currentSegmentGroupRef.current?.clearLayers();
+      staticSegmentsGroupRef.current?.clearLayers();
+      visitedSegmentsGroupRef.current?.clearLayers();
+      visitedIdsRef.current?.clear();
+      return;
+    }
+
+    const ordered = nearestNeighborOrder(start, remainingPois);
+    setOrderedRoute(ordered);
+
+    // Ensure layer groups
+    if (!visitedSegmentsGroupRef.current) visitedSegmentsGroupRef.current = L.layerGroup().addTo(map);
+    if (!currentSegmentGroupRef.current) currentSegmentGroupRef.current = L.layerGroup().addTo(map);
+    if (!staticSegmentsGroupRef.current) staticSegmentsGroupRef.current = L.layerGroup().addTo(map);
+
+    // Clear previous static segments
+    currentSegmentGroupRef.current.clearLayers();
+    staticSegmentsGroupRef.current.clearLayers();
+
+    if (ordered.length > 1) {
+      for (let i = 0; i < ordered.length - 1; i++) {
+        const from = ordered[i];
+        const to = ordered[i + 1];
+        const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
+          color: "#006b4a",
+          weight: 5,
+          opacity: 0.8,
+          smoothFactor: 1,
+          noClip: true,
+          dashArray: '10, 10'
+        });
+        staticSegmentsGroupRef.current.addLayer(seg);
+      }
+    }
+
+    // Fit bounds
+    try {
+      const coords = [[start.lat, start.lon], ...ordered.map(p => [p.lat, p.lon])];
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [60, 60] });
+    } catch (_) {}
+  }, [remainingPois, userCoords, mapRef]);
+
+  /** Keep mirror of orderedRoute for interval loop */
+  useEffect(() => {
+    routeMirrorRef.current = Array.isArray(orderedRoute) ? orderedRoute : [];
+  }, [orderedRoute]);
+
+  /** Real-time loop: update dynamic segment & handle arrivals */
+  useEffect(() => {
+    // Clear previous loop
+    if (loopRef.current) {
+      clearInterval(loopRef.current);
+      loopRef.current = null;
+    }
+
+    loopRef.current = setInterval(() => {
+      const map = mapRef.current;
+      const marker = planeMarkerRef.current;
+      const route = routeMirrorRef.current;
+      if (!map || !marker) return;
+
+      if (!route || route.length === 0) {
+        if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
+          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+          currentSegmentLineRef.current = null;
+        }
+        return;
+      }
+
+      const target = route[0];
+      if (!target) return;
+      const planeLatLng = marker.getLatLng();
+      if (!planeLatLng) return;
+
+      // Ensure dynamic group
+      if (!currentSegmentGroupRef.current && mapRef.current) {
+        currentSegmentGroupRef.current = L.layerGroup().addTo(mapRef.current);
+      }
+
+      const latlngs = [[planeLatLng.lat, planeLatLng.lng], [target.lat, target.lon]];
+
+      // Update/create dynamic polyline
+      if (currentSegmentLineRef.current) {
+        try { currentSegmentLineRef.current.setLatLngs(latlngs); } catch (_) {}
+      } else {
+        currentSegmentLineRef.current = L.polyline(latlngs, {
+          color: palette?.accent || "#00bcd4",
+          weight: 3,
+          opacity: 0.9,
+          smoothFactor: 1,
+          noClip: true
+        });
+        currentSegmentGroupRef.current.addLayer(currentSegmentLineRef.current);
+      }
+
+      // Arrival detection
+      const distKm = haversine(planeLatLng.lat, planeLatLng.lng, target.lat, target.lon);
+      if (distKm <= arrivalThresholdKm && !visitedIdsRef.current.has(target.id)) {
+        visitedIdsRef.current.add(target.id);
+
+        const planePos = marker.getLatLng();
+        const targetPos = [target.lat, target.lon];
+
+        // Pulse custom L:Var for arrival (wrapped in try for robustness)
+        try {
+          SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 1);
+          setTimeout(() => {
+            try { SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 0); } catch (_) {}
+          }, 1000);
+        } catch (e) {
+          console.warn("[useRoutePlanning] Error setting L:WFP_NextPoi", e);
+        }
+
+        // Auto-pause MSFS and sync UI button
+        try {
+          if (typeof SimVar?.SetSimVarValue === 'function') {
+            SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", 1);
+          }
+          // Update pause ref and UI button state
+          if (pauseRef) pauseRef.current = true;
+          if (typeof updatePauseButtonRef?.current === 'function') {
+            try { updatePauseButtonRef.current(); } catch (_) {}
+          }
+        } catch (e) {
+          console.warn("[useRoutePlanning] Error auto-pausing on arrival", e);
+        }
+
+        // Mark completed segment (red)
+        const completedSegment = L.polyline([[planePos.lat, planePos.lng], targetPos], {
+          color: "#ff0000",
+          weight: 3,
+          opacity: 0.9,
+          smoothFactor: 1,
+          noClip: true
+        });
+        visitedSegmentsGroupRef.current?.addLayer(completedSegment);
+
+        // Clear dynamic line (next tick will create new one)
+        if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
+          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+          currentSegmentLineRef.current = null;
+        }
+
+        // Rebuild static segments excluding first leg
+        if (staticSegmentsGroupRef.current && route.length > 1) {
+          staticSegmentsGroupRef.current.clearLayers();
+          for (let i = 1; i < route.length - 1; i++) {
+            const from = route[i];
+            const to = route[i + 1];
+            const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
+              color: "#006b4a",
+              weight: 5,
+              opacity: 0.8,
+              smoothFactor: 1,
+              noClip: true,
+              dashArray: '10, 10'
+            });
+            staticSegmentsGroupRef.current.addLayer(seg);
+          }
+        }
+
+        setCompletedSegments(prev => [...prev, { from: [planePos.lat, planePos.lng], to: targetPos }]);
+        setRemainingPois(prev => prev.filter(p => p.id !== target.id));
+        onArrive?.(target);
+      }
+    }, 1000);
+
+    return () => {
+      if (loopRef.current) clearInterval(loopRef.current);
+      loopRef.current = null;
+    };
+  }, [palette, arrivalThresholdKm, onArrive]);
+
+  // Cleanup on total unmount: clear groups
+  useEffect(() => {
+    return () => {
+      currentSegmentGroupRef.current?.clearLayers();
+      staticSegmentsGroupRef.current?.clearLayers();
+      visitedSegmentsGroupRef.current?.clearLayers();
+    };
+  }, []);
+
+  return { remainingPois, orderedRoute, completedSegments };
+}

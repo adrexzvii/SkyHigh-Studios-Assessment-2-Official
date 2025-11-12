@@ -20,7 +20,7 @@ import { Box } from "@mui/material";
 import { PoiProvider } from "./components/context/PoiContext";
 import palette from "./theme/palette";
 import PoiList from "./components/PoiList/PoiList";
-import MapView from "./components/MapView";
+import MapView from "./components/MapView/MapView";
 import TopBar from "./components/TopBar/TopBar";
 
 export default function App() {

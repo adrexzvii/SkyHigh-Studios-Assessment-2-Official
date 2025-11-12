@@ -21,7 +21,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { haversine } from "../utils/haversine";
+import { haversine } from "../../utils/geo/haversine";
 
 export function useDistance(userCoords, poi) {
   // Distance in kilometers (string with 2 decimals)
