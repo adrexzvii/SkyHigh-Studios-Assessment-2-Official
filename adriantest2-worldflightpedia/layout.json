@@ -3,7 +3,7 @@
     {
       "path": "ContentInfo/adriantest2-worldflightpedia/ContentHistory.json",
       "size": 67,
-      "date": 134070559868439553
+      "date": 134074137906066634
     },
     {
       "path": "ContentInfo/adriantest2-worldflightpedia/Thumbnail.jpg",
@@ -18,17 +18,17 @@
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/css/worldFlightPedia.css",
       "size": 15203,
-      "date": 134068527943375841
+      "date": 134072810922493133
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/index.html",
-      "size": 3729,
-      "date": 134068290177611321
+      "size": 3825,
+      "date": 134072614889378152
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/js/worldFlightPedia.js",
-      "size": 567337,
-      "date": 134068767536296567
+      "size": 570725,
+      "date": 134074101295924647
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/media/config.json",
@@ -38,27 +38,27 @@
     {
       "path": "InGamePanels/worldflightpedia-toolbar.spb",
       "size": 691,
-      "date": 134070559868047712
+      "date": 134074137905570557
     },
     {
       "path": "modules/worldFlightPedia_wasm_module.wasm",
-      "size": 39617,
-      "date": 134070559634563756
+      "size": 299490,
+      "date": 134072833172715102
     },
     {
       "path": "Scenery/worldflightpedia/worldflightpedia-cochabamba-poi-test-placement/worldflightpedia-cochabamba-poi-test-placement.bgl",
-      "size": 738,
-      "date": 134070559868218353
+      "size": 56,
+      "date": 134074137905828526
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.bin",
       "size": 7656,
-      "date": 134070559868268353
+      "date": 134074137905891718
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.gltf",
       "size": 3921,
-      "date": 134070559868278396
+      "date": 134074137905891718
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.xml",
