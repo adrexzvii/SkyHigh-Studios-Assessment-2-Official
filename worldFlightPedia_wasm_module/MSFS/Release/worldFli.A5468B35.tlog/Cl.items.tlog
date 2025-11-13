@@ -1,1 +1,8 @@
-D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\worldFlightPedia_wasm_module.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\worldFlightPedia_wasm_module.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\comm\CommunicationBus.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\CommunicationBus.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\comm\MessageParser.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\MessageParser.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\core\ModuleContext.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\ModuleContext.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\dispatch\DispatchHandler.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\DispatchHandler.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\flight\FlightController.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\FlightController.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\simconnect\SimConnectManager.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\SimConnectManager.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\simobjects\SimObjectManager.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\SimObjectManager.obj
+D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\src\worldFlightPedia_wasm_module.cpp;D:\SkyHigh-Studios-Assessment-2-Official\worldFlightPedia_wasm_module\MSFS\Release\worldFlightPedia_wasm_module.obj

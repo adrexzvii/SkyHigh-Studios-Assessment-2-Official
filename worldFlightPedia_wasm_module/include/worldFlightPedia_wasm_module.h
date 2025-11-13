@@ -1,4 +1,4 @@
-﻿// worldFlightPedia_wasm_module.h : Include file for standard system include files,
+// worldFlightPedia_wasm_module.h : Include file for standard system include files,
 // or project specific include files.
 
 #pragma once

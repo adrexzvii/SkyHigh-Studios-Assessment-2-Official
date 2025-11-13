@@ -112,8 +112,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__wasi__;_STRING_H_CPLUSPLUS_98_CONFORMANCE_;_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_;_LIBCPP_HAS_NO_THREADS;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <ExceptionHandling>false</ExceptionHandling>
@@ -148,10 +147,28 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="worldFlightPedia_wasm_module.cpp" />
+    <ClCompile Include="src\comm\CommunicationBus.cpp" />
+    <ClCompile Include="src\comm\MessageParser.cpp" />
+    <ClCompile Include="src\core\ModuleContext.cpp" />
+    <ClCompile Include="src\dispatch\DispatchHandler.cpp" />
+    <ClCompile Include="src\flight\FlightController.cpp" />
+    <ClCompile Include="src\simconnect\SimConnectManager.cpp" />
+    <ClCompile Include="src\simobjects\SimObjectManager.cpp" />
+    <ClCompile Include="src\worldFlightPedia_wasm_module.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="worldFlightPedia_wasm_module.h" />
+    <ClInclude Include="include\comm\CommunicationBus.h" />
+    <ClInclude Include="include\comm\MessageParser.h" />
+    <ClInclude Include="include\core\Constants.h" />
+    <ClInclude Include="include\core\ModuleContext.h" />
+    <ClInclude Include="include\dispatch\DispatchHandler.h" />
+    <ClInclude Include="include\flight\FlightController.h" />
+    <ClInclude Include="include\simconnect\SimConnectManager.h" />
+    <ClInclude Include="include\simobjects\SimObjectManager.h" />
+    <ClInclude Include="include\worldFlightPedia_wasm_module.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
