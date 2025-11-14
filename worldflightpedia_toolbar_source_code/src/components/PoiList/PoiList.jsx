@@ -29,9 +29,6 @@ export default function PoiList() {
   // Get memoized POI selection handler
   const handleSelectPoi = usePoiSelection(setSelectedPoi);
 
-  // Show empty state if no POIs available
-  if (!pois.length) return <PoiListEmpty />;
-
   return (
     <Box sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
       {/* Header: POI counter with accent border */}

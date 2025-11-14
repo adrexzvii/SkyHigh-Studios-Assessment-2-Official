@@ -65,7 +65,7 @@ export default function App() {
       {/* Main Content Grid: Sidebar + Map */}
       <Box sx={{ 
         display: "grid", 
-        gridTemplateColumns: "400px 1fr", 
+        gridTemplateColumns: "300px 1fr", 
         flex: 1,
         minHeight: 0,
         overflow: "hidden"

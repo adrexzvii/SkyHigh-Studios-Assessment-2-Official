@@ -149,7 +149,7 @@ export default function MapView({
         <Box sx={{ 
             position: "absolute",
             top: 93,
-            left: 400,
+            left: 300,
             right: 0,
             bottom: 0,
             bgcolor: palette.background,

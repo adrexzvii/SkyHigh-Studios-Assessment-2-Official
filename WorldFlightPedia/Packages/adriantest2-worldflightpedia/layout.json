@@ -27,8 +27,8 @@
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/js/worldFlightPedia.js",
-      "size": 570725,
-      "date": 134075709823830637
+      "size": 570564,
+      "date": 134075787961656933
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/media/config.json",
@@ -38,7 +38,7 @@
     {
       "path": "InGamePanels/worldflightpedia-toolbar.spb",
       "size": 691,
-      "date": 134075489358031902
+      "date": 134075795537438819
     },
     {
       "path": "modules/worldFlightPedia_wasm_module.wasm",

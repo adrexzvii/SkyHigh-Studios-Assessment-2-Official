@@ -7,7 +7,7 @@
         url="html_ui/InGamePanels/worldflightpedia-toolbar/index.html"
         resizeDirections="both"
         minWidth="56px"
-        minHeight="65px"
+        minHeight="30px"
         defaultWidth="66px"
         defaultHeight="65px"
         defaultTop="10px"
