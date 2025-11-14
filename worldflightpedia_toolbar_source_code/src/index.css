@@ -37,3 +37,37 @@ html, body, #root {
 .poi-icon svg { 
   display: block; 
 }
+
+/* Custom icon-button style using theme accent color
+   Notes:
+   - The elements are custom tags `<icon-button class="Reduce ...">`,
+     so we must target the element name (icon-button) rather than a
+     `.icon-button` class which does not exist in the markup.
+   - We also set the icon SVG fill to `currentColor` so the icon
+     matches the button color. Use `color` on the host to change icon
+     fill, and `background-color` for the button background.
+*/
+icon-button.Reduce.nodrag.condensed-interactive {
+  background-color: #00E46A !important;
+}
+
+icon-button.Maximize.nodrag.condensed-interactive {
+  background-color: #00E46A !important;
+}
+
+icon-button.Extern.nodrag.condensed-interactive {
+  background-color: #00E46A !important;
+}
+
+icon-button.Close.nodrag.condensed-interactive {
+  background-color: #00E46A !important;
+}
+
+/* Make SVG icons inherit the host color for fills/strokes. This
+   forces paths/polygons/etc. to use the button's `color` value.
+   `!important` used because some SVGs embed inline styles/classes. */
+icon-button .icon svg *,
+icon-button .Icon svg * {
+  fill: currentColor !important;
+  stroke: none !important;
+}
