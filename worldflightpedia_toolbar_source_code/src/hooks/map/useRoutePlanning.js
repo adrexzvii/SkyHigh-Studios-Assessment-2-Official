@@ -62,79 +62,117 @@ export function useRoutePlanning({
   const routeMirrorRef = useRef([]); // Mirror orderedRoute for interval closure
   const loopRef = useRef(null);
 
-  /** Normalize incoming POIs whenever raw list changes */
-  useEffect(() => {
-    const valid = normalizePois(pois);
-    setRemainingPois(valid);
-    setCompletedSegments([]);
-    if (visitedIdsRef.current) visitedIdsRef.current.clear();
-  }, [pois]);
-
-  /** Compute ordered route + draw dashed static segments */
+  /** Normalize incoming POIs and regenerate complete route */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map) {
+      console.log("[useRoutePlanning] Map not ready yet");
+      return;
+    }
 
-    // Determine starting coordinate: plane marker > userCoords
+    // Step 1: Normalize POIs
+    const valid = normalizePois(pois);
+    console.log("[useRoutePlanning] Normalized POIs:", valid.length);
+    setRemainingPois(valid);
+    setCompletedSegments([]);
+    
+    // Step 2: Clear all previous state and layers
+    if (visitedIdsRef.current) visitedIdsRef.current.clear();
+    if (currentSegmentLineRef.current) currentSegmentLineRef.current = null;
+    
+    // Clear all layer groups
+    if (currentSegmentGroupRef.current) {
+      currentSegmentGroupRef.current.clearLayers();
+      console.log("[useRoutePlanning] Cleared current segment group");
+    }
+    if (staticSegmentsGroupRef.current) {
+      staticSegmentsGroupRef.current.clearLayers();
+      console.log("[useRoutePlanning] Cleared static segments group");
+    }
+    if (visitedSegmentsGroupRef.current) {
+      visitedSegmentsGroupRef.current.clearLayers();
+      console.log("[useRoutePlanning] Cleared visited segments group");
+    }
+
+    // Step 3: Exit early if no valid POIs
+    if (!valid || valid.length === 0) {
+      console.log("[useRoutePlanning] No valid POIs, clearing route");
+      setOrderedRoute([]);
+      return;
+    }
+
+    // Step 4: Determine starting coordinate
     let startLat, startLon;
     const planeLatLng = planeMarkerRef.current?.getLatLng?.();
     if (planeLatLng) {
       startLat = planeLatLng.lat;
       startLon = planeLatLng.lng;
+      console.log("[useRoutePlanning] Start from plane marker:", startLat, startLon);
     } else if (typeof userCoords.lat === 'number' && typeof userCoords.lon === 'number') {
       startLat = userCoords.lat;
       startLon = userCoords.lon;
+      console.log("[useRoutePlanning] Start from userCoords:", startLat, startLon);
     } else {
-      // Cannot start route yet (no position)
+      console.log("[useRoutePlanning] No valid starting position");
+      setOrderedRoute([]);
       return;
     }
     const start = { lat: startLat, lon: startLon };
 
-    if (!remainingPois || remainingPois.length === 0) {
-      setOrderedRoute([]);
-      // Clear groups if exist
-      currentSegmentGroupRef.current?.clearLayers();
-      staticSegmentsGroupRef.current?.clearLayers();
-      visitedSegmentsGroupRef.current?.clearLayers();
-      visitedIdsRef.current?.clear();
-      return;
-    }
-
-    const ordered = nearestNeighborOrder(start, remainingPois);
+    // Step 5: Compute ordered route
+    const ordered = nearestNeighborOrder(start, valid);
+    console.log("[useRoutePlanning] Ordered route computed:", ordered.length, "POIs");
     setOrderedRoute(ordered);
 
-    // Ensure layer groups
-    if (!visitedSegmentsGroupRef.current) visitedSegmentsGroupRef.current = L.layerGroup().addTo(map);
-    if (!currentSegmentGroupRef.current) currentSegmentGroupRef.current = L.layerGroup().addTo(map);
-    if (!staticSegmentsGroupRef.current) staticSegmentsGroupRef.current = L.layerGroup().addTo(map);
+    // Step 6: Ensure layer groups exist
+    if (!visitedSegmentsGroupRef.current) {
+      visitedSegmentsGroupRef.current = L.layerGroup().addTo(map);
+      console.log("[useRoutePlanning] Created visited segments group");
+    }
+    if (!currentSegmentGroupRef.current) {
+      currentSegmentGroupRef.current = L.layerGroup().addTo(map);
+      console.log("[useRoutePlanning] Created current segment group");
+    }
+    if (!staticSegmentsGroupRef.current) {
+      staticSegmentsGroupRef.current = L.layerGroup().addTo(map);
+      console.log("[useRoutePlanning] Created static segments group");
+    }
 
-    // Clear previous static segments
-    currentSegmentGroupRef.current.clearLayers();
-    staticSegmentsGroupRef.current.clearLayers();
-
+    // Step 7: Draw static route segments (dashed green lines)
     if (ordered.length > 1) {
+      console.log("[useRoutePlanning] Drawing", ordered.length - 1, "static segments");
       for (let i = 0; i < ordered.length - 1; i++) {
         const from = ordered[i];
         const to = ordered[i + 1];
         const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
-          color: "#006b4a",
-          weight: 5,
+          color: "#00E46A",
+          weight: 4,
           opacity: 0.8,
           smoothFactor: 1,
-          noClip: true,
-          dashArray: '10, 10'
+          dashArray: '10, 5',
+          interactive: false,
+          pane: 'overlayPane'
         });
+        // Add directly to map first to visibility
+        seg.addTo(map);
+        // Then add to group for management
         staticSegmentsGroupRef.current.addLayer(seg);
       }
+      console.log("[useRoutePlanning] Static segments drawn successfully");
+    } else {
+      console.log("[useRoutePlanning] Not enough POIs for segments (need at least 2)");
     }
 
-    // Fit bounds
+    // Step 8: Fit map bounds to show entire route
     try {
       const coords = [[start.lat, start.lon], ...ordered.map(p => [p.lat, p.lon])];
       const bounds = L.latLngBounds(coords);
       map.fitBounds(bounds, { padding: [60, 60] });
-    } catch (_) {}
-  }, [remainingPois, userCoords, mapRef]);
+      console.log("[useRoutePlanning] Map bounds fitted");
+    } catch (err) {
+      console.error("[useRoutePlanning] Error fitting bounds:", err);
+    }
+  }, [pois, userCoords]);
 
   /** Keep mirror of orderedRoute for interval loop */
   useEffect(() => {

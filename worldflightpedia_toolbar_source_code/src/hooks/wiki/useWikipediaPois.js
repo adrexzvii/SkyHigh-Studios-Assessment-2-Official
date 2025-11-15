@@ -37,9 +37,14 @@ export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWa
 
       const fetchedPois = await fetchGeoSearch(lat, lon);
       if (fetchedPois && fetchedPois.length) {
-        setPois(fetchedPois);
+        // Add timestamp to force React to detect change even if POIs are identical
+        const poisWithTimestamp = fetchedPois.map(poi => ({
+          ...poi,
+          _fetchTimestamp: Date.now()
+        }));
+        setPois(poisWithTimestamp);
         // Send ordered POI coordinates to WASM using current plane position as start
-        sendPoisToWasm(fetchedPois, { lat, lon });
+        sendPoisToWasm(poisWithTimestamp, { lat, lon });
       }
     } catch (err) {
       console.error("[useWikipediaPois] Error fetching POIs:", err);
