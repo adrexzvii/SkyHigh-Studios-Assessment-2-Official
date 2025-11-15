@@ -211,6 +211,31 @@ export function useRoutePlanning({
         currentSegmentGroupRef.current = L.layerGroup().addTo(mapRef.current);
       }
 
+      // Check Start Flight (L:WFP_StartFlight); if not active, stop tracking UI
+      let flightTrackingActive = false;
+      try {
+        if (typeof SimVar?.GetSimVarValue === 'function') {
+          const rawValue = SimVar.GetSimVarValue("L:WFP_StartFlight", "Bool");
+          flightTrackingActive = rawValue === 1;
+          console.log(`[useRoutePlanning Loop] L:WFP_StartFlight raw: ${rawValue}, active: ${flightTrackingActive}`);
+        } else {
+          console.warn("[useRoutePlanning Loop] SimVar.GetSimVarValue not available");
+        }
+      } catch (e) {
+        console.error("[useRoutePlanning Loop] Error reading L:WFP_StartFlight:", e);
+      }
+
+      if (!flightTrackingActive) {
+        console.log("[useRoutePlanning Loop] Flight tracking INACTIVE - skipping update");
+        if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
+          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+          currentSegmentLineRef.current = null;
+        }
+        return;
+      }
+      
+      console.log("[useRoutePlanning Loop] Flight tracking ACTIVE - processing route");
+
       const latlngs = [[planeLatLng.lat, planeLatLng.lng], [target.lat, target.lon]];
 
       // Update/create dynamic polyline
@@ -245,29 +270,37 @@ export function useRoutePlanning({
           console.warn("[useRoutePlanning] Error setting L:WFP_NextPoi", e);
         }
 
-        // Auto-pause MSFS and sync UI button
+        // Auto-pause MSFS only if Start Flight is active; sync UI button
         try {
-          if (typeof SimVar?.SetSimVarValue === 'function') {
-            SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", 1);
+          let startActive = false;
+          try {
+            if (typeof SimVar?.GetSimVarValue === 'function') {
+              const rawValue = SimVar.GetSimVarValue("L:WFP_StartFlight", "Bool");
+              startActive = rawValue === 1;
+              console.log(`[useRoutePlanning Arrival] L:WFP_StartFlight raw: ${rawValue}, active: ${startActive}`);
+            } else {
+              console.warn("[useRoutePlanning Arrival] SimVar.GetSimVarValue not available");
+            }
+          } catch (e) {
+            console.error("[useRoutePlanning Arrival] Error reading L:WFP_StartFlight:", e);
           }
-          // Update pause ref and UI button state
-          if (pauseRef) pauseRef.current = true;
-          if (typeof updatePauseButtonRef?.current === 'function') {
-            try { updatePauseButtonRef.current(); } catch (_) {}
+
+          if (startActive) {
+            console.log("[useRoutePlanning Arrival] Triggering auto-pause");
+            if (typeof SimVar?.SetSimVarValue === 'function') {
+              SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", 1);
+              console.log("[useRoutePlanning Arrival]  K:PAUSE_SET sent");
+            }
+            if (pauseRef) pauseRef.current = true;
+            if (typeof updatePauseButtonRef?.current === 'function') {
+              try { updatePauseButtonRef.current(); } catch (_) {}
+            }
+          } else {
+            console.log("[useRoutePlanning Arrival]  Auto-pause skipped - Start Flight not active");
           }
         } catch (e) {
           console.warn("[useRoutePlanning] Error auto-pausing on arrival", e);
         }
-
-        // Mark completed segment (red)
-        const completedSegment = L.polyline([[planePos.lat, planePos.lng], targetPos], {
-          color: "#ff0000",
-          weight: 3,
-          opacity: 0.9,
-          smoothFactor: 1,
-          noClip: true
-        });
-        visitedSegmentsGroupRef.current?.addLayer(completedSegment);
 
         // Clear dynamic line (next tick will create new one)
         if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
@@ -295,6 +328,11 @@ export function useRoutePlanning({
 
         setCompletedSegments(prev => [...prev, { from: [planePos.lat, planePos.lng], to: targetPos }]);
         setRemainingPois(prev => prev.filter(p => p.id !== target.id));
+        
+        // Update route mirror immediately so next tick sees updated route
+        routeMirrorRef.current = routeMirrorRef.current.filter(p => p.id !== target.id);
+        console.log("[useRoutePlanning] Route updated, remaining POIs:", routeMirrorRef.current.length);
+        
         onArrive?.(target);
       }
     }, 1000);
