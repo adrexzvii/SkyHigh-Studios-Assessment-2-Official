@@ -18,9 +18,11 @@
 import React from "react";
 import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import palette from "../../theme/palette";
 import { useSimVarToggle } from "../../hooks/simvar/useSimVarToggle";
 import { useDialog } from "../../hooks/comm/useDialog";
+import { useCommBus } from "../../hooks/comm/useCommBus";
 import HelpDialog from "./HelpDialog";
 
 export default function TopBar() {
@@ -30,6 +32,8 @@ export default function TopBar() {
   const flight = useSimVarToggle("L:WFP_StartFlight");
   // Hook managing help dialog open/close state
   const help = useDialog(false);
+  // Hook managing CommBus connection status
+  const { isReady } = useCommBus();
 
   return (
     <>
@@ -46,13 +50,33 @@ export default function TopBar() {
           zIndex: 1200,
         }}
       >
-        {/* Product / feature title */}
-        <Typography
-          variant="h6"
-          sx={{ color: palette.textPrimary, fontWeight: 700, fontSize: "1.2rem" }}
-        >
-          POIS FLIGHTPLAN
-        </Typography>
+        {/* Left section: connection status */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* WASM connection status indicator */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <FiberManualRecordIcon
+              sx={{
+                fontSize: "12px",
+                color: isReady ? palette.accent : "#ff4444",
+                animation: isReady ? "none" : "pulse 1.5s ease-in-out infinite",
+                "@keyframes pulse": {
+                  "0%, 100%": { opacity: 1 },
+                  "50%": { opacity: 0.3 }
+                }
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                color: isReady ? palette.accent : "#ff4444",
+                fontSize: "0.75rem",
+                fontWeight: 600
+              }}
+            >
+              {isReady ? "WASM Connected" : "Connecting..."}
+            </Typography>
+          </Box>
+        </Box>
 
         {/* Action buttons group */}
         <Box sx={{ display: "flex", gap: 1 }}>
