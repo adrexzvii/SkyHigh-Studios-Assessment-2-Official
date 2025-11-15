@@ -18,7 +18,6 @@ import React from "react";
 import { List, Typography, Box } from "@mui/material";
 import palette from "../../theme/palette";
 import PoiListItem from "./PoiListItem";
-import PoiListEmpty from "./PoiListEmpty";
 import { usePoiSelection } from "../../hooks/map/usePoiSelection";
 import { usePoiContext } from "../context/PoiContext";
 
