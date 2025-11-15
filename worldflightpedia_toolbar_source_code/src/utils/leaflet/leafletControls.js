@@ -4,6 +4,8 @@ import FlightIcon from '@mui/icons-material/Flight';
 import SearchIcon from '@mui/icons-material/Search';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import L from 'leaflet';
 
 /**
@@ -30,7 +32,7 @@ export function addFollowControl(map, { palette, followRef, setFollowPlane, upda
       const updateButton = () => {
         const isFollowing = followRef.current;
         const iconColor = isFollowing ? (palette?.dark || '#000') : '#000';
-        const bgColor = isFollowing ? (palette?.accent || '#00bcd4') : '#fff';
+        const bgColor = isFollowing ? (palette?.accent || '#00E46A') : '#fff';
         btn.style.backgroundColor = bgColor;
         root.render(React.createElement(FlightIcon, { style: { fontSize: '18px', color: iconColor, transform: 'rotate(45deg)' } }));
       };
@@ -105,8 +107,8 @@ export function addPausePlayControl(map, { SimVar, pauseRef, updatePauseButtonRe
         const isPaused = pauseRef.current;
         if (pauseBlinkIntervalRef.current) { try { clearInterval(pauseBlinkIntervalRef.current); } catch (_) {} pauseBlinkIntervalRef.current = null; }
         if (isPaused) {
-          let green = true; btn.style.backgroundColor = '#00b050';
-          pauseBlinkIntervalRef.current = setInterval(() => { green = !green; btn.style.backgroundColor = green ? '#00b050' : '#fff'; }, 1000);
+          let green = true; btn.style.backgroundColor = '#00E46A';
+          pauseBlinkIntervalRef.current = setInterval(() => { green = !green; btn.style.backgroundColor = green ? '#00E46A' : '#fff'; }, 1000);
         } else { btn.style.backgroundColor = '#fff'; }
       };
       const updatePauseUI = () => { renderIcon(); applyBlinking(); };
@@ -125,4 +127,88 @@ export function addPausePlayControl(map, { SimVar, pauseRef, updatePauseButtonRe
     }
   });
   return new PausePlayControl().addTo(map);
+}
+
+/**
+ * Adds custom zoom controls with SVG icons to the map.
+ * @param {L.Map} map - Leaflet map instance.
+ * @param {Object} ctx
+ * @param {{dark?:string, accent?:string}} [ctx.palette] - Theme palette for styling.
+ * @returns {L.Control} The created Leaflet control.
+ */
+export function addCustomZoomControl(map, { palette }) {
+  const ZoomControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function () {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      
+      // Zoom In button
+      const zoomInBtn = L.DomUtil.create('div', '', container);
+      zoomInBtn.title = 'Zoom in';
+      Object.assign(zoomInBtn.style, {
+        width: '30px', 
+        height: '30px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        cursor: 'pointer', 
+        backgroundColor: '#fff',
+        borderBottom: '1px solid #ccc'
+      });
+      const zoomInRoot = createRoot(zoomInBtn);
+      zoomInRoot.render(React.createElement(AddIcon, { style: { fontSize: '20px', color: '#000' } }));
+      
+      L.DomEvent.on(zoomInBtn, 'click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        L.DomEvent.preventDefault(e);
+        map.zoomIn();
+      });
+      
+      L.DomEvent.on(zoomInBtn, 'mouseenter', () => {
+        zoomInBtn.style.backgroundColor = palette?.accent || '#00E46A';
+        zoomInRoot.render(React.createElement(AddIcon, { style: { fontSize: '20px', color: palette?.dark || '#000' } }));
+      });
+      
+      L.DomEvent.on(zoomInBtn, 'mouseleave', () => {
+        zoomInBtn.style.backgroundColor = '#fff';
+        zoomInRoot.render(React.createElement(AddIcon, { style: { fontSize: '20px', color: '#000' } }));
+      });
+      
+      // Zoom Out button
+      const zoomOutBtn = L.DomUtil.create('div', '', container);
+      zoomOutBtn.title = 'Zoom out';
+      Object.assign(zoomOutBtn.style, {
+        width: '30px', 
+        height: '30px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        cursor: 'pointer', 
+        backgroundColor: '#fff'
+      });
+      const zoomOutRoot = createRoot(zoomOutBtn);
+      zoomOutRoot.render(React.createElement(RemoveIcon, { style: { fontSize: '20px', color: '#000' } }));
+      
+      L.DomEvent.on(zoomOutBtn, 'click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        L.DomEvent.preventDefault(e);
+        map.zoomOut();
+      });
+      
+      L.DomEvent.on(zoomOutBtn, 'mouseenter', () => {
+        zoomOutBtn.style.backgroundColor = palette?.accent || '#00E46A';
+        zoomOutRoot.render(React.createElement(RemoveIcon, { style: { fontSize: '20px', color: palette?.dark || '#000' } }));
+      });
+      
+      L.DomEvent.on(zoomOutBtn, 'mouseleave', () => {
+        zoomOutBtn.style.backgroundColor = '#fff';
+        zoomOutRoot.render(React.createElement(RemoveIcon, { style: { fontSize: '20px', color: '#000' } }));
+      });
+      
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+      return container;
+    }
+  });
+  return new ZoomControl().addTo(map);
 }

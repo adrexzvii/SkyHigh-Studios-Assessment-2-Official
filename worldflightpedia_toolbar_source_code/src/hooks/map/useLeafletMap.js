@@ -28,7 +28,7 @@
 
 import { useEffect } from 'react';
 import L from 'leaflet';
-import { addFollowControl, addFetchPoisControl, addPausePlayControl } from '../../utils/leaflet/leafletControls';
+import { addFollowControl, addFetchPoisControl, addPausePlayControl, addCustomZoomControl } from '../../utils/leaflet/leafletControls';
 
 /**
  * Initializes & maintains a Leaflet map instance. Side-effect only; returns void.
@@ -63,7 +63,7 @@ export function useLeafletMap({
   // Create new map instance
     const map = L.map(containerRef.current, { 
       preferCanvas: true,
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: false
     }).setView([userCoords.lat, userCoords.lon], 13);
 
@@ -90,6 +90,7 @@ export function useLeafletMap({
     planeMarkerRef.current = L.marker([userCoords.lat, userCoords.lon], { icon: planeIcon }).addTo(map);
 
     // Add custom controls (refactored to utils)
+    addCustomZoomControl(mapRef.current, { palette });
     addFollowControl(mapRef.current, { palette, followRef, setFollowPlane, updateFollowButtonRef });
     addFetchPoisControl(mapRef.current, { fetchPoisAroundPlane });
     addPausePlayControl(mapRef.current, { SimVar, pauseRef, updatePauseButtonRef, pauseBlinkIntervalRef });
