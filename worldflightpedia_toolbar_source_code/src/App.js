@@ -22,12 +22,16 @@ import palette from "./theme/palette";
 import PoiList from "./components/PoiList/PoiList";
 import MapView from "./components/MapView/MapView";
 import TopBar from "./components/TopBar/TopBar";
+import HelpOverlay from "./components/HelpOverlay/HelpOverlay";
 
 export default function App() {
   // Global state: POI list, selected POI, and user/plane coordinates
   const [pois, setPois] = useState([]);
   const [selectedPoi, setSelectedPoi] = useState(null);
   const [userCoords, setUserCoords] = useState({ lat: -17.389, lon: -66.156 }); // Default: Cochabamba, Bolivia
+  
+  // Help overlay state (independent from context)
+  const [helpOpen, setHelpOpen] = useState(false);
   
   // Reference to WasmViewCommunicationDebug component for imperative API access
   // const wasmDebugRef = useRef(null);
@@ -60,7 +64,7 @@ export default function App() {
       }}
     >
       {/* Top Navigation Bar */}
-      <TopBar />
+      <TopBar onOpenHelp={() => setHelpOpen(true)} />
       
       {/* Main Content Grid: Sidebar + Map */}
       <Box sx={{ 
@@ -104,6 +108,9 @@ export default function App() {
           />
         </div>
       </Box>
+      
+      {/* Help Overlay - rendered at root level */}
+      <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </Box>
     </PoiProvider>
   );

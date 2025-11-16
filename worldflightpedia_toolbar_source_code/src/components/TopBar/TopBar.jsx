@@ -21,17 +21,13 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import palette from "../../theme/palette";
 import { useSimVarToggle } from "../../hooks/simvar/useSimVarToggle";
-import { useDialog } from "../../hooks/comm/useDialog";
 import { useCommBus } from "../../hooks/comm/useCommBus";
-import HelpDialog from "./HelpDialog";
 
-export default function TopBar() {
+export default function TopBar({ onOpenHelp }) {
   // Hook controlling POI spawn toggle (SimVar: L:spawnAllLasersRed)
   const spawnPois = useSimVarToggle("L:spawnAllLasersRed");
   // Hook controlling flight tracking toggle (SimVar: L:WFP_StartFlight)
   const flight = useSimVarToggle("L:WFP_StartFlight");
-  // Hook managing help dialog open/close state
-  const help = useDialog(false);
   // Hook managing CommBus connection status
   const { isReady } = useCommBus();
 
@@ -103,7 +99,7 @@ export default function TopBar() {
           {/* Open help dialog */}
           <Tooltip title="Help">
             <IconButton
-              onClick={help.handleOpen}
+              onClick={onOpenHelp}
               sx={{ color: palette.textPrimary, "&:hover": { bgcolor: palette.accentHover } }}
             >
               <HelpOutlineIcon />
@@ -112,8 +108,7 @@ export default function TopBar() {
         </Box>
       </Box>
 
-      {/* Contextual help dialog (controlled component) */}
-      <HelpDialog open={help.open} onClose={help.handleClose} />
+      {/* HelpDialog removed: Help now opens Wikipedia popup in MapView */}
     </>
   );
 }
