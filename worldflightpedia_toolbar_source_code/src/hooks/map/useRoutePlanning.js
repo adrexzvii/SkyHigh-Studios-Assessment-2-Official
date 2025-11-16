@@ -61,6 +61,7 @@ export function useRoutePlanning({
   const currentSegmentLineRef = useRef(null);
   const routeMirrorRef = useRef([]); // Mirror orderedRoute for interval closure
   const loopRef = useRef(null);
+  const startRef = useRef(null); // Starting coordinate used to draw first active segment
 
   /** Normalize incoming POIs and regenerate complete route */
   useEffect(() => {
@@ -118,6 +119,7 @@ export function useRoutePlanning({
       return;
     }
     const start = { lat: startLat, lon: startLon };
+    startRef.current = start;
 
     // Step 5: Compute ordered route
     const ordered = nearestNeighborOrder(start, valid);
@@ -138,29 +140,46 @@ export function useRoutePlanning({
       console.log("[useRoutePlanning] Created static segments group");
     }
 
-    // Step 7: Draw static route segments (dashed green lines)
-    if (ordered.length > 1) {
-      console.log("[useRoutePlanning] Drawing", ordered.length - 1, "static segments");
-      for (let i = 0; i < ordered.length - 1; i++) {
-        const from = ordered[i];
-        const to = ordered[i + 1];
-        const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
+    // Step 7: Draw static route segments with active highlight
+    try {
+      if (ordered.length >= 1 && startRef.current) {
+        // Active segment: start -> first POI
+        const activeSeg = L.polyline([[startRef.current.lat, startRef.current.lon], [ordered[0].lat, ordered[0].lon]], {
           color: "#00E46A",
           weight: 4,
-          opacity: 0.8,
+          opacity: 0.9,
           smoothFactor: 1,
           dashArray: '10, 5',
           interactive: false,
           pane: 'overlayPane'
         });
-        // Add directly to map first to visibility
-        seg.addTo(map);
-        // Then add to group for management
-        staticSegmentsGroupRef.current.addLayer(seg);
+        activeSeg.addTo(map);
+        staticSegmentsGroupRef.current.addLayer(activeSeg);
       }
-      console.log("[useRoutePlanning] Static segments drawn successfully");
-    } else {
-      console.log("[useRoutePlanning] Not enough POIs for segments (need at least 2)");
+
+      if (ordered.length > 1) {
+        console.log("[useRoutePlanning] Drawing", ordered.length - 1, "static future segments");
+        for (let i = 0; i < ordered.length - 1; i++) {
+          const from = ordered[i];
+          const to = ordered[i + 1];
+          const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
+            color: "#006b4a",
+            weight: 5,
+            opacity: 0.8,
+            smoothFactor: 1,
+            dashArray: '10, 10',
+            interactive: false,
+            pane: 'overlayPane'
+          });
+          seg.addTo(map);
+          staticSegmentsGroupRef.current.addLayer(seg);
+        }
+        console.log("[useRoutePlanning] Static segments drawn successfully");
+      } else {
+        console.log("[useRoutePlanning] Not enough POIs for future segments (need at least 2)");
+      }
+    } catch (err) {
+      console.error("[useRoutePlanning] Error drawing static segments:", err);
     }
 
     // Step 8: Fit map bounds to show entire route
@@ -172,7 +191,7 @@ export function useRoutePlanning({
     } catch (err) {
       console.error("[useRoutePlanning] Error fitting bounds:", err);
     }
-  }, [pois, userCoords]);
+  }, [pois]);
 
   /** Keep mirror of orderedRoute for interval loop */
   useEffect(() => {
@@ -206,11 +225,6 @@ export function useRoutePlanning({
       const planeLatLng = marker.getLatLng();
       if (!planeLatLng) return;
 
-      // Ensure dynamic group
-      if (!currentSegmentGroupRef.current && mapRef.current) {
-        currentSegmentGroupRef.current = L.layerGroup().addTo(mapRef.current);
-      }
-
       // Check Start Flight (L:WFP_StartFlight); if not active, stop tracking UI
       let flightTrackingActive = false;
       try {
@@ -233,24 +247,8 @@ export function useRoutePlanning({
         }
         return;
       }
-      
-      console.log("[useRoutePlanning Loop] Flight tracking ACTIVE - processing route");
 
-      const latlngs = [[planeLatLng.lat, planeLatLng.lng], [target.lat, target.lon]];
-
-      // Update/create dynamic polyline
-      if (currentSegmentLineRef.current) {
-        try { currentSegmentLineRef.current.setLatLngs(latlngs); } catch (_) {}
-      } else {
-        currentSegmentLineRef.current = L.polyline(latlngs, {
-          color: palette?.accent || "#00bcd4",
-          weight: 3,
-          opacity: 0.9,
-          smoothFactor: 1,
-          noClip: true
-        });
-        currentSegmentGroupRef.current.addLayer(currentSegmentLineRef.current);
-      }
+      console.log("[useRoutePlanning Loop] Flight tracking ACTIVE - processing route (static highlight only)");
 
       // Arrival detection
       const distKm = haversine(planeLatLng.lat, planeLatLng.lng, target.lat, target.lon);
@@ -302,27 +300,42 @@ export function useRoutePlanning({
           console.warn("[useRoutePlanning] Error auto-pausing on arrival", e);
         }
 
-        // Clear dynamic line (next tick will create new one)
-        if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
-          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
-          currentSegmentLineRef.current = null;
-        }
+        // No dynamic line to clear; static segments will be rebuilt
 
-        // Rebuild static segments excluding first leg
-        if (staticSegmentsGroupRef.current && route.length > 1) {
+        // Rebuild static segments with new active highlight
+        if (staticSegmentsGroupRef.current) {
           staticSegmentsGroupRef.current.clearLayers();
-          for (let i = 1; i < route.length - 1; i++) {
-            const from = route[i];
-            const to = route[i + 1];
-            const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
-              color: "#006b4a",
-              weight: 5,
-              opacity: 0.8,
+
+          // Active segment becomes: route[0] -> route[1]
+          if (route.length > 1) {
+            const activeSeg = L.polyline([[route[0].lat, route[0].lon], [route[1].lat, route[1].lon]], {
+              color: "#00E46A",
+              weight: 4,
+              opacity: 0.9,
               smoothFactor: 1,
-              noClip: true,
-              dashArray: '10, 10'
+              dashArray: '10, 5',
+              interactive: false,
+              pane: 'overlayPane'
             });
-            staticSegmentsGroupRef.current.addLayer(seg);
+            staticSegmentsGroupRef.current.addLayer(activeSeg);
+          }
+
+          // Future segments after the active one
+          if (route.length > 2) {
+            for (let i = 1; i < route.length - 1; i++) {
+              const from = route[i];
+              const to = route[i + 1];
+              const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
+                color: "#006b4a",
+                weight: 5,
+                opacity: 0.8,
+                smoothFactor: 1,
+                dashArray: '10, 10',
+                interactive: false,
+                pane: 'overlayPane'
+              });
+              staticSegmentsGroupRef.current.addLayer(seg);
+            }
           }
         }
 
