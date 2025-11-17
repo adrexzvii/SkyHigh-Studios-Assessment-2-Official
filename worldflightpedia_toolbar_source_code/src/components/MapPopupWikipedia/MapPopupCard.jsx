@@ -96,17 +96,16 @@ export default function MapPopupCard({
               pr: 1,
               '&::-webkit-scrollbar': { width: '6px' },
               '&::-webkit-scrollbar-track': {
-                backgroundColor: palette.dark,
-                borderRadius: '6px',
+                backgroundColor: 'transparent',
               },
               '&::-webkit-scrollbar-thumb': {
                 backgroundColor: palette.accent,
                 borderRadius: '6px',
-                border: `2px solid ${palette.dark}`,
-                '&:hover': { backgroundColor: palette.textSecondary },
+                border: 'none',
+                '&:hover': { backgroundColor: palette.accentHover },
               },
               scrollbarWidth: 'thin',
-              scrollbarColor: `${palette.accent} ${palette.dark}`,
+              scrollbarColor: `${palette.accent} transparent`,
             }}
           >
             {/* Wikipedia extract or fallback message */}
