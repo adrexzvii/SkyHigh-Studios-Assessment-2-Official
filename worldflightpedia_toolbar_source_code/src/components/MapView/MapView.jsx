@@ -142,8 +142,23 @@ export default function MapView({
     // Plane tracking: updates marker position, heading, and optional map follow
     usePlaneTracking({ mapRef, planeMarkerRef, followRef });
 
-    // Render POI markers with selection states
-    usePoiMarkers({ mapRef, poiLayerRef, pois, selectedPoi, setSelectedPoi });
+    // Render POI markers with selection states and get popup control function
+    const { openPoiPopup } = usePoiMarkers({ 
+      mapRef, 
+      poiLayerRef, 
+      pois, 
+      selectedPoi, 
+      setSelectedPoi,
+      userCoords,
+      onFocusPoi: focusOnPoi
+    });
+    
+    // Store openPoiPopup in context for access from PoiList
+    useEffect(() => {
+      if (window.__openPoiPopup !== openPoiPopup) {
+        window.__openPoiPopup = openPoiPopup;
+      }
+    }, [openPoiPopup]);
 
     return (
         <Box sx={{ 
@@ -166,7 +181,8 @@ export default function MapView({
             />
 
             {/* Wikipedia POI details popup (rendered when POI is selected) */}
-            {selectedPoi && (
+            {/* Temporarily disabled - using Leaflet native popups instead */}
+            {/* {selectedPoi && (
                 <Box sx={{ 
                     position: "absolute",
                     top: 0,
@@ -180,7 +196,7 @@ export default function MapView({
                         onFocusPoi={focusOnPoi}
                     />
                 </Box>
-            )}
+            )} */}
         </Box>
     );
 }

@@ -27,6 +27,11 @@ export function usePoiSelection(setSelectedPoi) {
       
       // Update selected POI state
       setSelectedPoi(poi);
+      
+      // Open Leaflet popup if available
+      if (window.__openPoiPopup) {
+        window.__openPoiPopup(poi);
+      }
     },
     [setSelectedPoi] // Only recreate if setter changes
   );

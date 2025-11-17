@@ -62,7 +62,19 @@ export default function MapPopupWikipedia({ poi, userCoords, onFocusPoi }) {
 
   // Render full popup card
   return (
-    <Card sx={{ position: "absolute", top: 173, left: 0, zIndex: 10, width: 250 }}>
+    <Card
+      sx={{
+        position: "absolute",
+        top: 173,
+        left: 0,
+        zIndex: 10,
+        width: 250,
+        maxHeight: "calc(100vh - 173px - 20px)", // Full height minus top position and bottom padding
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Show loading spinner while fetching Wikipedia data */}
       {loading ? (
         <CircularProgress sx={{ m: 3 }} />

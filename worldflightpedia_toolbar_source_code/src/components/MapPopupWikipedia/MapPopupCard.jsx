@@ -26,6 +26,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import RemoveIcon from "@mui/icons-material/Remove";
+import palette from "../../theme/palette";
 
 export default function MapPopupCard({
   poi,
@@ -49,59 +50,129 @@ export default function MapPopupCard({
         />
       )}
       
-      <CardContent sx={{ overflowY: "auto", maxHeight: "25rem" }}>
+      <CardContent sx={{ 
+        flex: "1 1 auto", 
+        overflowY: "auto", 
+        display: "flex", 
+        flexDirection: "column",
+        p: 2,
+        '&:last-child': { pb: 2 }
+      }}>
         {/* Header: Title and minimize button */}
-        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h6">{poiTitle}</Typography>
-          <IconButton size="small" onClick={() => setMinimized(true)}>
-            <RemoveIcon />
-          </IconButton>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+          <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: 1.3 }}>
+            {poiTitle}
+          </Typography>
+          {setMinimized && (
+            <IconButton size="small" onClick={() => setMinimized(true)} sx={{ mt: -0.5, mr: -0.5 }}>
+              <RemoveIcon />
+            </IconButton>
+          )}
         </Box>
 
         {/* Distance from user/plane to POI */}
         {distance && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.875rem' }}>
             Distance: {distance} km
           </Typography>
         )}
 
         {/* POI metadata: rating and category */}
-        <Typography variant="body2" color="text.secondary">
+        {(poi.rating || poi.category) && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.875rem' }}>
           {poi.rating ? `${poi.rating} · ` : ""}
           {poi.category}
-        </Typography>
+          </Typography>
+        )}
 
         {/* Expandable description section */}
         <Collapse in={expanded} timeout="auto" unmountOnExit>
-          {/* Wikipedia extract or fallback message */}
-          <Typography variant="caption" sx={{ my: 1 }}>
-            {details?.extract || "No description available."}
-          </Typography>
-          
+          {/* Fixed-height scrollable area; scrollbar always visible */}
+          <Box
+            sx={{
+              height: 150,
+              overflowY: 'scroll',
+              mb: 1.5,
+              pr: 1,
+              '&::-webkit-scrollbar': { width: '6px' },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: palette.dark,
+                borderRadius: '6px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: palette.accent,
+                borderRadius: '6px',
+                border: `2px solid ${palette.dark}`,
+                '&:hover': { backgroundColor: palette.textSecondary },
+              },
+              scrollbarWidth: 'thin',
+              scrollbarColor: `${palette.accent} ${palette.dark}`,
+            }}
+          >
+            {/* Wikipedia extract or fallback message */}
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontSize: '0.875rem', 
+                lineHeight: 1.6,
+                color: 'text.primary'
+              }}
+            >
+              {details?.extract || "No description available."}
+            </Typography>
+          </Box>
+        </Collapse>
+
+        {/* Buttons row: Show more/less and View on map side by side (compact) */}
+        <Box sx={{ display: 'flex', gap: 1, mt: 'auto', justifyContent: 'center', alignItems: 'center' }}>
+          {/* Toggle button to expand/collapse description */}
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setExpanded(!expanded)}
+            startIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            sx={{ 
+              textTransform: 'none',
+              fontSize: '0.8125rem',
+              py: 0.5,
+              fontWeight: 500,
+              borderColor: '#00E46A',
+              color: '#00E46A',
+              '&:hover': {
+                borderColor: '#00FF94',
+                backgroundColor: 'rgba(0,228,106,0.10)'
+              }
+            }}
+          >
+            {expanded ? "Show less" : "Show more"}
+          </Button>
+
           {/* Focus map on POI button */}
           <Button
             size="small"
             variant="contained"
             onClick={() => {
               onFocusPoi?.(poi);
-              setMinimized(true);
+              if (setMinimized) setMinimized(true);
             }}
-            sx={{ mt: 1 }}
+            sx={{ 
+              textTransform: 'none',
+              fontSize: '0.8125rem',
+              py: 0.5,
+              fontWeight: 600,
+              backgroundColor: '#00E46A',
+              color: '#0B0C0E',
+              boxShadow: 'none',
+              ml: "10px",
+              '&:hover': {
+                backgroundColor: '#00FF94',
+                boxShadow: '0 0 0 1px #00FF94'
+              }
+            }}
           >
-            View on map
+            Zoom to POI
           </Button>
-        </Collapse>
-
-        {/* Toggle button to expand/collapse description */}
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => setExpanded(!expanded)}
-          sx={{ mt: 1 }}
-          startIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        >
-          {expanded ? "Show less" : "Show more"}
-        </Button>
+        </Box>
       </CardContent>
     </>
   );
