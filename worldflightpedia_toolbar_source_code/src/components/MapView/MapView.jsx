@@ -48,8 +48,22 @@ export default function MapView({
   const resizeObserverRef = useRef(null); // Tracks container size to invalidate Leaflet
   const pauseRef = useRef(false); // Track local pause state for pause/play control
     
-    // Flight tracking state
-    const [followPlane, setFollowPlane] = useState(true);
+    // LocalStorage keys for MapView state
+    const LS_KEYS = {
+      followPlane: "wfp_map_follow_plane",
+      pause: "wfp_map_pause",
+      remainingPois: "wfp_map_remaining_pois",
+      orderedRoute: "wfp_map_ordered_route",
+      completedSegments: "wfp_map_completed_segments",
+    };
+    
+    // Flight tracking state (load from localStorage)
+    const [followPlane, setFollowPlane] = useState(() => {
+      try {
+        const saved = window.localStorage?.getItem(LS_KEYS.followPlane);
+        return saved ? JSON.parse(saved) : true;
+      } catch { return true; }
+    });
     const followRef = useRef(followPlane);
   const updateFollowButtonRef = useRef(null); // Reference to button update function
   const updatePauseButtonRef = useRef(null);  // Reference to pause/play button update function
@@ -68,6 +82,33 @@ export default function MapView({
     });
 
     // Route tracking & arrivals handled entirely by useRoutePlanning hook.
+
+    // Load pause state from localStorage on mount
+    useEffect(() => {
+      try {
+        const savedPause = window.localStorage?.getItem(LS_KEYS.pause);
+        if (savedPause !== null) {
+          pauseRef.current = JSON.parse(savedPause);
+        }
+      } catch {}
+      
+    }, []);
+
+    // Persist followPlane state
+    useEffect(() => {
+      try {
+        window.localStorage?.setItem(LS_KEYS.followPlane, JSON.stringify(followPlane));
+      } catch {}
+    }, [followPlane]);
+
+    // Persist route planning state (remaining POIs, route, completed segments)
+    useEffect(() => {
+      try {
+        window.localStorage?.setItem(LS_KEYS.remainingPois, JSON.stringify(remainingPois));
+        window.localStorage?.setItem(LS_KEYS.orderedRoute, JSON.stringify(orderedRoute));
+        window.localStorage?.setItem(LS_KEYS.completedSegments, JSON.stringify(completedSegments));
+      } catch {}
+    }, [remainingPois, orderedRoute, completedSegments]);
 
     /**
      * Sync followPlane state with ref for use in Leaflet controls
