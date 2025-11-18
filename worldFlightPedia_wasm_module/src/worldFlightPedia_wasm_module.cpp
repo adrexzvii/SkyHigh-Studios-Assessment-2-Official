@@ -19,6 +19,7 @@
 #include "simobjects/SimObjectManager.h"
 #include "dispatch/DispatchHandler.h"
 #include "simconnect/SimConnectManager.h"
+#include "flight/FlightController.h"
 
 // -----------------------------------------------------------------------------
 // MODULE INITIALIZATION

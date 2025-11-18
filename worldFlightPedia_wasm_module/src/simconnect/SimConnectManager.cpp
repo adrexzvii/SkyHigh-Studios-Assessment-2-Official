@@ -30,7 +30,7 @@ bool SimConnectManager_Initialize()
         return false;
     }
 
-    fprintf(stderr, "[MSFS] v70 SimConnect connected as '%s'.\n", clientName);
+    fprintf(stderr, "[MSFS] v101 SimConnect connected as '%s'.\n", clientName);
 
     // -------------------------------------------------------------------------
     // Subscribe to system-level events (flight lifecycle notifications)

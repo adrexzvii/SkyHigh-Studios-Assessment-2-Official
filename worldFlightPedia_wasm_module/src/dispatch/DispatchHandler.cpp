@@ -18,6 +18,10 @@
 // -----------------------------------------------------------------------------
 void CALLBACK MyDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* pContext)
 {
+    // Check FlightController timers on every dispatch callback
+    // This ensures sound resets are checked frequently (every SimConnect message)
+    FlightController_Update();
+    
     if (!pData)
         return; // Defensive: ignore null pointers
 

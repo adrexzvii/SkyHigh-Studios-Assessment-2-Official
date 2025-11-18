@@ -4,8 +4,11 @@
 #include "core/Constants.h"
 
 #include <MSFS/MSFS.h>
+#include <MSFS/Legacy/gauges.h>
 #include <SimConnect.h>
 #include <cstdio>
+#include <string>
+#include <ctime>
 
 // -----------------------------------------------------------------------------
 // Flight controller
@@ -13,6 +16,48 @@
 // - Uses globals from ModuleContext (g_poi_coords, g_lastStartFlight, g_flightActive, g_activePoiIndex)
 // - Spawns/removes SimObjects via SimConnect and SimObjectManager helpers
 // -----------------------------------------------------------------------------
+
+// Static variables to track NextPoi sound reset timing
+// Using absolute timestamp for compatibility
+static time_t g_nextPoiSoundResetTimestamp = 0;
+static bool g_nextPoiSoundActive = false;
+
+/**
+ * Helper function to execute calculator code (for setting L:Vars)
+ * Uses execute_calculator_code from MSFS Gauge API
+ */
+static void ExecuteCalculatorCode(const char* code)
+{
+    if (!code) return;
+    
+    // execute_calculator_code is the MSFS Gauge API function to run RPN/calculator strings
+    // It's commonly used to set L:Vars from WASM
+    execute_calculator_code(code, nullptr, nullptr, nullptr);
+    
+    fprintf(stderr, "[MSFS] Executed calculator code: %s\n", code);
+}
+
+/**
+ * Called periodically to check if NextPoi sound should be reset
+ * This gets called from the dispatch handler on every SimConnect message
+ */
+void FlightController_Update()
+{
+    if (g_nextPoiSoundActive)
+    {
+        // Get current time
+        time_t now = time(nullptr);
+        
+        // Check if 2 seconds have passed
+        if (now >= g_nextPoiSoundResetTimestamp)
+        {
+            // Reset the sound L:Var to 0
+            ExecuteCalculatorCode("0 (>L:WFP_NEXT_POI_SOUND)");
+            g_nextPoiSoundActive = false;
+            fprintf(stderr, "[MSFS] NextPoi sound reset to 0 after 4 seconds.\n");
+        }
+    }
+}
 
 /**
  * Called when the local variable L:WFP_StartFlight changes.
@@ -98,6 +143,19 @@ void FlightController_OnNextPoi(double newValue) {
                 SimConnect_AICreateSimulatedObject(g_hSimConnect, "laser_red", pos, REQUEST_ADD_LASERS);
 
                 fprintf(stderr, "[MSFS] Advanced to POI[%d] -> %.6f, %.6f\n", g_activePoiIndex, lat, lon);
+                
+                // ---------------------------------------------------------------
+                // Trigger NextPoi sound: set L:WFP_NEXT_POI_VOLUME to 100 and
+                // L:WFP_NEXT_POI_SOUND to 1, then schedule reset to 0 after 2s
+                // ---------------------------------------------------------------
+                ExecuteCalculatorCode("100 (>L:WFP_NEXT_POI_VOLUME)");
+                ExecuteCalculatorCode("1 (>L:WFP_NEXT_POI_SOUND)");
+                
+                // Schedule sound reset for 2 seconds from now (using absolute timestamp)
+                g_nextPoiSoundResetTimestamp = time(nullptr) + 4; // current time + 4 seconds
+                g_nextPoiSoundActive = true;
+                
+                fprintf(stderr, "[MSFS] NextPoi sound triggered, will reset in 4 seconds.\n");
             }
             else
             {
