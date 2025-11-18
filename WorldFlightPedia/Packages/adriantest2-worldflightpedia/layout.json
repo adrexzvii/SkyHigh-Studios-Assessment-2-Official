@@ -3,7 +3,7 @@
     {
       "path": "ContentInfo/adriantest2-worldflightpedia/ContentHistory.json",
       "size": 67,
-      "date": 134075489358443899
+      "date": 134079679196742476
     },
     {
       "path": "ContentInfo/adriantest2-worldflightpedia/Thumbnail.jpg",
@@ -27,8 +27,8 @@
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/js/worldFlightPedia.js",
-      "size": 562897,
-      "date": 134078829858757668
+      "size": 565007,
+      "date": 134079680696970353
     },
     {
       "path": "html_ui/InGamePanels/worldflightpedia-toolbar/media/config.json",
@@ -38,27 +38,62 @@
     {
       "path": "InGamePanels/worldflightpedia-toolbar.spb",
       "size": 691,
-      "date": 134075795537438819
+      "date": 134079679196332003
     },
     {
       "path": "modules/worldFlightPedia_wasm_module.wasm",
-      "size": 306778,
-      "date": 134075484009967086
+      "size": 319003,
+      "date": 134079677340733124
     },
     {
       "path": "Scenery/worldflightpedia/worldflightpedia-cochabamba-poi-test-placement/worldflightpedia-cochabamba-poi-test-placement.bgl",
       "size": 56,
-      "date": 134075489358198488
+      "date": 134079679196487081
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/model/Cube.bin",
+      "size": 936,
+      "date": 134079679196532199
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/model/Cube.gltf",
+      "size": 2100,
+      "date": 134079679196532199
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/model/Cube.xml",
+      "size": 184,
+      "date": 134079562885245098
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/model/model.CFG",
+      "size": 29,
+      "date": 134079545971428618
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/sim.cfg",
+      "size": 159,
+      "date": 134079545438487340
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/soundai/Adrian_WorldFlightPedia.PC.pck",
+      "size": 301476,
+      "date": 134079584392488311
+    },
+    {
+      "path": "SimObjects/Landmarks/cube/soundai/soundai.xml",
+      "size": 1322,
+      "date": 134079584967226534
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.bin",
       "size": 7656,
-      "date": 134075489358253590
+      "date": 134079679196627298
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.gltf",
       "size": 3921,
-      "date": 134075489358253590
+      "date": 134079679196627298
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.xml",
@@ -73,7 +108,7 @@
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/sim.cfg",
       "size": 164,
-      "date": 134070181555853370
+      "date": 134078978709006214
     }
   ]
 }
