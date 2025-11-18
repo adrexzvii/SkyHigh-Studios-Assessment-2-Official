@@ -32,6 +32,11 @@
      <WwiseRTPC LocalVar="WFP_HIDE_VOLUME" Units="number" Index="0" RTPCName="WFP_ALL_POI_HIDE_SOUND" />
   </Sound>
 
+  <Sound  WwiseEvent="New" WwiseData="true" LocalVar="WFP_NEXT_POI_SOUND" >
+    <Range LowerBound="0.1"/>
+     <WwiseRTPC LocalVar="WFP_NEXT_POI_VOLUME" Units="number" Index="0" RTPCName="WFP_NEW_POI_SOUND" />
+  </Sound>
+
 </SimVarSounds>
 
   
