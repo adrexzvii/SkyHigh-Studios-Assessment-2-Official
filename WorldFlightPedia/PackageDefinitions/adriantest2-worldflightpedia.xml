@@ -43,6 +43,14 @@
 			<AssetDir>PackageSources\Scenery\worldflightpedia\worldflightpedia-cochabamba-poi-test-placement\</AssetDir>
 			<OutputDir>Scenery\worldflightpedia\worldflightpedia-cochabamba-poi-test-placement\</OutputDir>
 		</AssetGroup>
+		<AssetGroup Name="worldflightpedia_cube">
+			<Type>SimObject</Type>
+			<Flags>
+				<FSXCompatibility>false</FSXCompatibility>
+			</Flags>
+			<AssetDir>PackageSources\SimObjects\Landmarks\cube\</AssetDir>
+			<OutputDir>SimObjects\Landmarks\cube\</OutputDir>
+		</AssetGroup>
 		<AssetGroup Name="worldflightpedia_laser_red">
 			<Type>SimObject</Type>
 			<Flags>

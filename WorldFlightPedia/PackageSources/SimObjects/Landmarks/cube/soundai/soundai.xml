@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (c) Asobo Studio, All rights reserved. www.asobostudio.com -->
+
+<SoundInfo Version="0.1">
+
+	<WwisePackages>
+		<MainPackage Name="Adrian_WorldFlightPedia"/>
+	</WwisePackages>
+	
+ <!-- <AlwaysPlaySounds><Sound WwiseData="true" WwiseEvent="Stop">
+    </Sound></AlwaysPlaySounds> -->
+
+    
+    <SimVarSounds>
+  <Sound  WwiseEvent="Start" WwiseData="true" LocalVar="WFP_START_SOUND" >
+    <Range LowerBound="0.1"/>
+     <WwiseRTPC LocalVar="WFP_START_VOLUME" Units="number" Index="0" RTPCName="WFP_STARTFLIGHT_SOUND" />
+  </Sound>
+  
+  <Sound  WwiseEvent="Stop" WwiseData="true" LocalVar="WFP_STOP_SOUND" >
+    <Range LowerBound="0.1"/>
+     <WwiseRTPC LocalVar="WFP_STOP_VOLUME" Units="number" Index="0" RTPCName="WFP_STOPFLIGHT_SOUND" />
+  </Sound>
+</SimVarSounds>
+
+  
+
+
+</SoundInfo>
+
+
+
