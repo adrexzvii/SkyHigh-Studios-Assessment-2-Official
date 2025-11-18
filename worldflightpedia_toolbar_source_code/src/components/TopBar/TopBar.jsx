@@ -15,12 +15,13 @@
  * @component
  * @returns {JSX.Element} Top navigation bar with action buttons and help dialog
  */
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import palette from "../../theme/palette";
 import { useSimVarToggle } from "../../hooks/simvar/useSimVarToggle";
+import { setSimVarSafe } from "../../utils/simvar/simvarUtils";
 import { useCommBus } from "../../hooks/comm/useCommBus";
 
 export default function TopBar({ onOpenHelp }) {
@@ -30,6 +31,128 @@ export default function TopBar({ onOpenHelp }) {
   const flight = useSimVarToggle("L:WFP_StartFlight");
   // Hook managing CommBus connection status
   const { isReady } = useCommBus();
+  // Local UI state for manual testing of L:WFP_START_SOUND
+  const [soundOn, setSoundOn] = useState(false);
+  // Timeout ref to clear pending sound resets
+  const soundTimeoutRef = useRef(null);
+  // Ref for delayed start-sound trigger (1s after start)
+  const delayedSoundRef = useRef(null);
+  // Separate refs for stop-sound handling to avoid clashing with start-sound
+  const stopSoundTimeoutRef = useRef(null);
+  const delayedStopRef = useRef(null);
+  // Refs for show-sound handling (for Show/Hide POIs)
+  const showSoundTimeoutRef = useRef(null);
+  const delayedShowRef = useRef(null);
+  // Refs for hide-sound handling (for Hide POIs)
+  const hideSoundTimeoutRef = useRef(null);
+  const delayedHideRef = useRef(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (soundTimeoutRef.current) {
+        clearTimeout(soundTimeoutRef.current);
+        soundTimeoutRef.current = null;
+      }
+      if (delayedSoundRef.current) {
+        clearTimeout(delayedSoundRef.current);
+        delayedSoundRef.current = null;
+      }
+      if (stopSoundTimeoutRef.current) {
+        clearTimeout(stopSoundTimeoutRef.current);
+        stopSoundTimeoutRef.current = null;
+      }
+      if (delayedStopRef.current) {
+        clearTimeout(delayedStopRef.current);
+        delayedStopRef.current = null;
+      }
+      if (showSoundTimeoutRef.current) {
+        clearTimeout(showSoundTimeoutRef.current);
+        showSoundTimeoutRef.current = null;
+      }
+      if (delayedShowRef.current) {
+        clearTimeout(delayedShowRef.current);
+        delayedShowRef.current = null;
+      }
+      if (hideSoundTimeoutRef.current) {
+        clearTimeout(hideSoundTimeoutRef.current);
+        hideSoundTimeoutRef.current = null;
+      }
+      if (delayedHideRef.current) {
+        clearTimeout(delayedHideRef.current);
+        delayedHideRef.current = null;
+      }
+    };
+  }, []);
+
+  // Pulse the start sound simvar: set to 1 for 4 seconds, then back to 0.
+  const toggleStartSound = () => {
+    // set sound on
+    setSimVarSafe("L:WFP_START_SOUND", "Number", 1);
+    setSoundOn(true);
+
+    // schedule turning it off after 4s
+    soundTimeoutRef.current = setTimeout(() => {
+      setSimVarSafe("L:WFP_START_SOUND", "Number", 0);
+      console.log("4.5 sec doneeeeeeeeeeeeeeeeeeeeeeeeee");
+      setSoundOn(false);
+      soundTimeoutRef.current = null;
+    }, 3800);
+  };
+
+  // Pulse the stop sound simvar: set to 1 for 4 seconds, then back to 0.
+  const toggleStopSound = () => {
+    // clear any existing pending stop reset
+    if (stopSoundTimeoutRef.current) {
+      clearTimeout(stopSoundTimeoutRef.current);
+      stopSoundTimeoutRef.current = null;
+    }
+
+    // set stop sound on
+    setSimVarSafe("L:WFP_STOP_SOUND", "Number", 1);
+    // schedule turning it off after 4s
+    stopSoundTimeoutRef.current = setTimeout(() => {
+      setSimVarSafe("L:WFP_STOP_SOUND", "Number", 0);
+      console.log("4.5 sec doneeeeeeeeeeeeeeeeeeeeeeeeee stoooooooooooooooop");
+      stopSoundTimeoutRef.current = null;
+    }, 1600);
+  };
+
+  // Pulse the show sound simvar: set to 1 for ~4 seconds, then back to 0.
+  const toggleShowSound = () => {
+    // clear existing pending reset
+    if (showSoundTimeoutRef.current) {
+      clearTimeout(showSoundTimeoutRef.current);
+      showSoundTimeoutRef.current = null;
+    }
+
+    // set show sound on
+    setSimVarSafe("L:WFP_SHOW_SOUND", "Number", 1);
+
+    // schedule turning it off after ~3.8s
+    showSoundTimeoutRef.current = setTimeout(() => {
+      setSimVarSafe("L:WFP_SHOW_SOUND", "Number", 0);
+      showSoundTimeoutRef.current = null;
+    }, 3500);
+  };
+
+  // Pulse the hide sound simvar: set to 1 for ~4 seconds, then back to 0.
+  const toggleHideSound = () => {
+    // clear existing pending reset
+    if (hideSoundTimeoutRef.current) {
+      clearTimeout(hideSoundTimeoutRef.current);
+      hideSoundTimeoutRef.current = null;
+    }
+
+    // set hide sound on
+    setSimVarSafe("L:WFP_HIDE_SOUND", "Number", 1);
+
+    // schedule turning it off after ~3.8s
+    hideSoundTimeoutRef.current = setTimeout(() => {
+      setSimVarSafe("L:WFP_HIDE_SOUND", "Number", 0);
+      hideSoundTimeoutRef.current = null;
+    }, 3700);
+  };
 
   return (
     <>
@@ -79,7 +202,40 @@ export default function TopBar({ onOpenHelp }) {
           {/* Toggle all POIs visibility in MSFS */}
           <Tooltip title="Show/Hide all POIs in MSFS">
             <Button
-              onClick={spawnPois.toggle}
+              onClick={() => {
+                const willShow = !spawnPois.value;
+                spawnPois.toggle();
+
+                if (willShow) {
+                  // showing POIs: set show volume and trigger show sound
+                  try {
+                    setSimVarSafe("L:WFP_SHOW_VOLUME", "Number", 100);
+                  } catch {}
+
+                  if (delayedShowRef.current) {
+                    clearTimeout(delayedShowRef.current);
+                    delayedShowRef.current = null;
+                  }
+                  delayedShowRef.current = setTimeout(() => {
+                    toggleShowSound();
+                    delayedShowRef.current = null;
+                  }, 1000);
+                } else {
+                  // hiding POIs: set hide volume and trigger hide sound
+                  try {
+                    setSimVarSafe("L:WFP_HIDE_VOLUME", "Number", 100);
+                  } catch {}
+
+                  if (delayedHideRef.current) {
+                    clearTimeout(delayedHideRef.current);
+                    delayedHideRef.current = null;
+                  }
+                  delayedHideRef.current = setTimeout(() => {
+                    toggleHideSound();
+                    delayedHideRef.current = null;
+                  }, 1000);
+                }
+              }}
               sx={{ color: palette.textPrimary, "&:hover": { bgcolor: palette.accentHover } }}
             >
               {spawnPois.value ? "Hide all POIs in MSFS" : "Show all POIs in MSFS"}
@@ -89,7 +245,39 @@ export default function TopBar({ onOpenHelp }) {
           {/* Start or stop flight tracking */}
           <Tooltip title="Start/Stop Flight Tracking">
             <Button
-              onClick={flight.toggle}
+              onClick={() => {
+                const willStart = !flight.value;
+                flight.toggle();
+                if (willStart) {
+                  try {
+                    setSimVarSafe("L:WFP_START_VOLUME", "Number", 100);
+                  } catch {}
+
+                  // trigger the start sound after 1 second
+                  if (delayedSoundRef.current) {
+                    clearTimeout(delayedSoundRef.current);
+                    delayedSoundRef.current = null;
+                  }
+                  delayedSoundRef.current = setTimeout(() => {
+                    toggleStartSound();
+                    delayedSoundRef.current = null;
+                  }, 1000);
+                } else {
+                  // stopping flight: set stop volume and trigger stop sound after 1s
+                  try {
+                    setSimVarSafe("L:WFP_STOP_VOLUME", "Number", 100);
+                  } catch {}
+
+                  if (delayedStopRef.current) {
+                    clearTimeout(delayedStopRef.current);
+                    delayedStopRef.current = null;
+                  }
+                  delayedStopRef.current = setTimeout(() => {
+                    toggleStopSound();
+                    delayedStopRef.current = null;
+                  }, 1000);
+                }
+              }}
               sx={{ color: palette.textPrimary, "&:hover": { bgcolor: palette.accentHover } }}
             >
               {flight.value ? "Stop Flight" : "Start Flight"}

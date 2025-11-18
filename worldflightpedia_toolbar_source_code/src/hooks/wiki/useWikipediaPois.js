@@ -20,6 +20,7 @@
  */
 import { useCallback } from "react";
 import { fetchGeoSearch } from "../../utils/wiki/wikipediaApi";
+import { setSimVarSafe } from "../../utils/simvar/simvarUtils";
 
 export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWasm }) {
   const fetchPoisAroundPlane = useCallback(async () => {
@@ -34,6 +35,10 @@ export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWa
       if (typeof lat !== "number" || typeof lon !== "number") return;
 
       setUserCoords({ lat, lon });
+
+      // Spawn a cube 
+        setSimVarSafe("L:WFP_SPAWN_CUBE", "Bool", 1);
+      
 
       const fetchedPois = await fetchGeoSearch(lat, lon);
       if (fetchedPois && fetchedPois.length) {
