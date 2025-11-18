@@ -5,6 +5,7 @@
 #include <vector>
 #include <MSFS/MSFS.h>
 #include <SimConnect.h>
+#include <cmath>
 
 void RemoveSimObject()
 {
@@ -83,5 +84,88 @@ void SpawnSimObject()
         {
             fprintf(stderr, "[MSFS] Spawn FAILED (HRESULT=0x%08X)\n", static_cast<unsigned int>(hr));
         }
+    }
+}
+
+// A simple POD to request user position via SimConnect data definition
+struct UserPositionData {
+    double latitude;
+    double longitude;
+    double altitude;
+    double plane_heading_degrees_true;
+};
+
+void SpawnCubeNearAircraft()
+{
+    if (!g_hSimConnect)
+        return;
+
+    // Request a single sample of the user aircraft position heading via SimConnect_RequestDataOnSimObject
+    // First, define the data definition if not already defined elsewhere.
+    // To keep this self-contained, we add the definition here each time (harmless, idempotent in practice for same def id/fields).
+
+    HRESULT hr = S_OK;
+
+    hr = SimConnect_AddToDataDefinition(g_hSimConnect, DEFINITION_USER_POSITION, "PLANE LATITUDE", "degrees");
+    hr = SimConnect_AddToDataDefinition(g_hSimConnect, DEFINITION_USER_POSITION, "PLANE LONGITUDE", "degrees");
+    hr = SimConnect_AddToDataDefinition(g_hSimConnect, DEFINITION_USER_POSITION, "PLANE ALTITUDE", "meters");
+    hr = SimConnect_AddToDataDefinition(g_hSimConnect, DEFINITION_USER_POSITION, "PLANE HEADING DEGREES TRUE", "degrees");
+
+    // Request one-time data sample; the result will come in the dispatch callback as SIMCONNECT_RECV_SIMOBJECT_DATA
+    hr = SimConnect_RequestDataOnSimObject(g_hSimConnect,
+        REQUEST_USER_POS_FOR_CUBE,
+        DEFINITION_USER_POSITION,
+        SIMCONNECT_OBJECT_ID_USER,
+        SIMCONNECT_PERIOD_ONCE,
+        SIMCONNECT_DATA_REQUEST_FLAG_DEFAULT,
+        0, 0, 0);
+
+    if (hr != S_OK)
+    {
+        fprintf(stderr, "[MSFS] SpawnCubeNearAircraft: failed to request user position (0x%08X)\n", (unsigned)hr);
+    }
+    else
+    {
+        fprintf(stderr, "[MSFS] SpawnCubeNearAircraft: requested user position to compute spawn offset.\n");
+    }
+}
+
+void SpawnCubeAtOffsetFromUser(double latDeg, double lonDeg, double altMeters, double headingTrueDeg, double rightMeters)
+{
+    if (!g_hSimConnect) return;
+
+    // Heading math
+    const double DegToRad = 3.14159265358979323846 / 180.0;
+    const double earthRadiusMeters = 6378137.0;
+    double hdgRad = headingTrueDeg * DegToRad;
+    double rightRad = hdgRad - (3.14159265358979323846 / 2.0);
+
+    double dNorth = std::sin(rightRad) * rightMeters;
+    double dEast  = std::cos(rightRad) * rightMeters;
+
+    double dLat = (dNorth / earthRadiusMeters) * (180.0 / 3.14159265358979323846);
+    double dLon = (dEast / (earthRadiusMeters * std::cos(latDeg * DegToRad))) * (180.0 / 3.14159265358979323846);
+
+    double spawnLat = latDeg + dLat;
+    double spawnLon = lonDeg + dLon;
+
+    SIMCONNECT_DATA_INITPOSITION pos = {};
+    pos.Latitude = spawnLat;
+    pos.Longitude = spawnLon;
+    pos.Altitude = altMeters;
+    pos.Pitch = 0;
+    pos.Bank = 0;
+    pos.Heading = 0;
+    pos.OnGround = 0;
+
+    HRESULT hr = SimConnect_AICreateSimulatedObject(g_hSimConnect, "cube", pos, REQUEST_ADD_CUBE);
+    if (hr == S_OK)
+    {
+        fprintf(stderr, "[MSFS] Spawned 'cube' at %.2fm right of aircraft: lat=%.7f lon=%.7f alt=%.2f\n",
+            rightMeters, spawnLat, spawnLon, altMeters);
+    }
+    else
+    {
+        fprintf(stderr, "[MSFS] Failed to spawn 'cube' (0x%08X)\n", (unsigned)hr);
     }
 }

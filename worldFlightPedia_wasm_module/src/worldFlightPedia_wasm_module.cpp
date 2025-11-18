@@ -28,7 +28,7 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
 {
 
     // ----------------------------------------------------
-    // 1) Inicializamos SimConnect a través del Manager
+    // 1) Initialize SimConnect via the Manager
     // ----------------------------------------------------
     if (!SimConnectManager_Initialize())
     {
@@ -37,12 +37,12 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
     }
 
     // ----------------------------------------------------
-    // 2) Inicializamos el Communication Bus
+    // 2) Initialize the Communication Bus
     // ----------------------------------------------------
     CommBus_Initialize();
 
     // ----------------------------------------------------
-    // 3) Avisamos al panel JS que el WASM está listo
+    // 3) Notify JS panel that WASM is ready
     // ----------------------------------------------------
     const char* startup = "WASM ready";
     fsCommBusCall("OnMessageFromWasm",
@@ -59,10 +59,10 @@ extern "C" MODULE_EXPORT MSFS_CALLBACK void module_init(void)
 // -----------------------------------------------------------------------------
 extern "C" MODULE_EXPORT MSFS_CALLBACK void module_deinit(void)
 {
-    // Apagar Communication Bus
+    // Shut down Communication Bus
     CommBus_Shutdown();
 
-    // Apagar SimConnect
+    // Shut down SimConnect
     SimConnectManager_Shutdown();
 
     fprintf(stderr, "[MSFS] module_deinit completed.\n");

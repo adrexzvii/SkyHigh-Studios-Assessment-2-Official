@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-// Interfaz pública del Flight Controller
+// Public interface of the Flight Controller
 
-// Se llama cuando cambia el L:WFP_StartFlight (0 → stop, 1 → start)
+// Called when L:WFP_StartFlight changes (0 -> stop, 1 -> start)
 void FlightController_OnStartFlight(double newValue);
 
-// Se llama cuando cambia el L:WFP_NextPoi (1 → avanzar al siguiente POI)
+// Called when L:WFP_NextPoi changes (1 -> advance to next POI)
 void FlightController_OnNextPoi(double newValue);

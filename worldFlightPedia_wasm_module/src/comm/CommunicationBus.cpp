@@ -6,20 +6,20 @@
 #include "comm/MessageParser.h"
 #include <MSFS/MSFS_CommBus.h>
 
-#include "core/ModuleContext.h"   // para g_poi_coords
+#include "core/ModuleContext.h"   // for g_poi_coords
 #include "comm/CommunicationBus.h"
 
 // -----------------------------------------------------------
-// Inicializa el CommBus y registra el listener JS → WASM
+// Initialize the CommBus and register the JS -> WASM listener
 // -----------------------------------------------------------
 void CommBus_Initialize()
 {
     std::fprintf(stderr, "[MSFS] CommBus initialization...\n");
 
-    // Registramos el handler EXACTAMENTE como en tu código original
+    // Register the handler exactly as in the original code
     fsCommBusRegister("OnMessageFromJs", OnMessageFromJS, nullptr);
 
-    // Enviamos el mensaje de startup (lo movemos aquí)
+    // Send the startup message (moved here)
     const char* startup = "WASM ready";
     fsCommBusCall("OnMessageFromWasm",
         startup,
@@ -31,7 +31,7 @@ void CommBus_Initialize()
 
 
 // -----------------------------------------------------------
-// Finaliza el CommBus (igual que tu module_deinit original)
+// Shutdown the CommBus (same behaviour as original module_deinit)
 // -----------------------------------------------------------
 void CommBus_Shutdown()
 {
@@ -48,10 +48,10 @@ void OnMessageFromJS(const char* buf, unsigned int bufSize, void* ctx)
     // Expected shape:
     // { "type": "POI_COORDINATES", "data": [ {"lat": 40.7, "lon": -74.0}, ... ], "count": 2 }
 
-    // Parseamos POIs usando el parser dedicado
+    // Parse POIs using the dedicated parser
         auto parsed = ParsePoiCoordinates(received);
 
-    // Reemplazamos el vector global con los datos parseados
+    // Replace global vector with parsed data
     g_poi_coords = parsed;
 
     // Logs
