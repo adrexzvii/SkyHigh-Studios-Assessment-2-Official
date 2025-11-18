@@ -5,11 +5,11 @@
  * Fetch nearby pages using Wikipedia GeoSearch
  * @param {number} lat
  * @param {number} lon
- * @param {number} [radius=5000]
- * @param {number} [limit=10]
+ * @param {number} [radius=10000] radius in meters for search POIs
+ * @param {number} [limit=50] limit number of results
  * @returns {Promise<Array>} Array of geosearch results or []
  */
-export async function fetchGeoSearch(lat, lon, radius = 5000, limit = 10) {
+export async function fetchGeoSearch(lat, lon, radius = 10000, limit = 50) {
   if (typeof lat !== 'number' || typeof lon !== 'number') return [];
   const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=${radius}&gslimit=${limit}&format=json&origin=*`;
   try {

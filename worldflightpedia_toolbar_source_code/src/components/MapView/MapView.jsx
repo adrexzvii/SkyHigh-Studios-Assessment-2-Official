@@ -76,7 +76,7 @@ export default function MapView({
       userCoords,
       pois,
       palette,
-      arrivalThresholdKm: 0.2,
+      arrivalThresholdKm: 0.1, // 100m threshold for arrival
       pauseRef,
       updatePauseButtonRef
     });

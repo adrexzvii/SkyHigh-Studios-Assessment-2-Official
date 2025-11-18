@@ -213,10 +213,7 @@ export function useRoutePlanning({
       if (!map || !marker) return;
 
       if (!route || route.length === 0) {
-        if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
-          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
-          currentSegmentLineRef.current = null;
-        }
+        // No route: do nothing (keep any static segments already drawn)
         return;
       }
 
@@ -224,6 +221,18 @@ export function useRoutePlanning({
       if (!target) return;
       const planeLatLng = marker.getLatLng();
       if (!planeLatLng) return;
+
+      // Ensure current segment group exists
+      if (!currentSegmentGroupRef.current) {
+        try {
+          currentSegmentGroupRef.current = L.layerGroup().addTo(map);
+        } catch (_) { currentSegmentGroupRef.current = null; }
+      }
+
+      // Static-only mode: we do NOT update the plane->POI line every tick.
+      // The active segment is drawn once at route creation and rebuilt when
+      // a POI is reached (see arrival handling below). This avoids dynamic
+      // jitter while keeping the route static until arrival triggers a redraw.
 
       // Check Start Flight (L:WFP_StartFlight); if not active, stop tracking UI
       let flightTrackingActive = false;
@@ -233,7 +242,9 @@ export function useRoutePlanning({
           flightTrackingActive = rawValue === 1;
           console.log(`[useRoutePlanning Loop] L:WFP_StartFlight raw: ${rawValue}, active: ${flightTrackingActive}`);
         } else {
-          console.warn("[useRoutePlanning Loop] SimVar.GetSimVarValue not available");
+          // In development environments where SimVar is not available assume active
+          console.warn("[useRoutePlanning Loop] SimVar.GetSimVarValue not available - assuming active for dev");
+          flightTrackingActive = true;
         }
       } catch (e) {
         console.error("[useRoutePlanning Loop] Error reading L:WFP_StartFlight:", e);
@@ -302,13 +313,26 @@ export function useRoutePlanning({
 
         // No dynamic line to clear; static segments will be rebuilt
 
-        // Rebuild static segments with new active highlight
+        // Update route mirror immediately so the drawing code below uses the
+        // route without the POI we just reached. This ensures the new active
+        // segment is computed from the *next* POI onward.
+        const updatedRoute = route.filter(p => p.id !== target.id);
+        routeMirrorRef.current = updatedRoute;
+
+        // Clear dynamic current line so we can rebuild active static highlight
+        if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
+          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+          currentSegmentLineRef.current = null;
+        }
+
+        // Rebuild static segments with new active highlight using the updated route
         if (staticSegmentsGroupRef.current) {
           staticSegmentsGroupRef.current.clearLayers();
 
-          // Active segment becomes: route[0] -> route[1]
-          if (route.length > 1) {
-            const activeSeg = L.polyline([[route[0].lat, route[0].lon], [route[1].lat, route[1].lon]], {
+          // Active segment becomes: plane -> updatedRoute[0]
+          if (updatedRoute.length >= 1) {
+            const planePos = marker.getLatLng();
+            const activeSeg = L.polyline([[planePos.lat, planePos.lng], [updatedRoute[0].lat, updatedRoute[0].lon]], {
               color: "#00E46A",
               weight: 4,
               opacity: 0.9,
@@ -321,10 +345,10 @@ export function useRoutePlanning({
           }
 
           // Future segments after the active one
-          if (route.length > 2) {
-            for (let i = 1; i < route.length - 1; i++) {
-              const from = route[i];
-              const to = route[i + 1];
+          if (updatedRoute.length >= 2) {
+            for (let i = 0; i < updatedRoute.length - 1; i++) {
+              const from = updatedRoute[i];
+              const to = updatedRoute[i + 1];
               const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
                 color: "#006b4a",
                 weight: 5,
@@ -341,9 +365,6 @@ export function useRoutePlanning({
 
         setCompletedSegments(prev => [...prev, { from: [planePos.lat, planePos.lng], to: targetPos }]);
         setRemainingPois(prev => prev.filter(p => p.id !== target.id));
-        
-        // Update route mirror immediately so next tick sees updated route
-        routeMirrorRef.current = routeMirrorRef.current.filter(p => p.id !== target.id);
         console.log("[useRoutePlanning] Route updated, remaining POIs:", routeMirrorRef.current.length);
         
         onArrive?.(target);
