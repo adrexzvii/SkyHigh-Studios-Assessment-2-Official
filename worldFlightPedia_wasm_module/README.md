@@ -7,6 +7,7 @@ A standalone WebAssembly (WASM) module for Microsoft Flight Simulator (MSFS) tha
 This WASM module acts as a bridge between MSFS SimConnect and JavaScript-based panels, providing functionality to:
 - Spawn and remove SimObjects dynamically in the simulator
 - Manage Points of Interest (POI) during flight
+- Spawn objects near the user aircraft with offset positioning
 - Handle bidirectional communication using the MSFS Communication Bus API
 - Monitor and respond to local variables (L:VARs) for flight control
 
@@ -14,8 +15,9 @@ This WASM module acts as a bridge between MSFS SimConnect and JavaScript-based p
 
 ### 🎯 Core Capabilities
 
-- **Dynamic SimObject Management**: Create and remove SimObjects (e.g., `laser_red`) at specific coordinates in real-time
+- **Dynamic SimObject Management**: Create and remove SimObjects (e.g., `laser_red`, `cube`) at specific coordinates in real-time
 - **POI Flight System**: Sequential navigation through Points of Interest with automatic SimObject spawning
+- **Offset Spawning**: Spawn objects at calculated positions relative to the user aircraft (e.g., cube at right offset)
 - **JavaScript Integration**: Full communication bridge between WASM and JavaScript panels
 - **Event-Driven Architecture**: Responds to SimConnect events and local variable changes
 - **Modular Design**: Clean separation of concerns across multiple managers and handlers
@@ -25,7 +27,7 @@ This WASM module acts as a bridge between MSFS SimConnect and JavaScript-based p
 #### SimConnect Manager
 - Initializes and manages SimConnect connection
 - Registers events (flight loaded, sim start, key inputs)
-- Handles data definitions for local variables
+- Handles data definitions for local variables and aircraft position
 - Sets up dispatch callbacks
 
 #### Communication Bus
@@ -33,6 +35,7 @@ This WASM module acts as a bridge between MSFS SimConnect and JavaScript-based p
 - Receives POI coordinates from JS panels
 - Sends acknowledgments and status updates back to JS
 - Parses JSON-like message structures
+- Sends "WASM ready" notification on initialization
 
 #### Flight Controller
 - Manages flight state (start/stop)
@@ -44,11 +47,14 @@ This WASM module acts as a bridge between MSFS SimConnect and JavaScript-based p
 - Encapsulates SimObject creation and removal logic
 - Manages object IDs for tracking spawned objects
 - Handles cleanup operations
+- Supports multiple SimObject types (laser_red, cube)
+- Calculates offset positions for spawning near aircraft
 
 #### Dispatch Handler
 - Processes SimConnect callbacks
 - Routes events to appropriate handlers
 - Manages data updates from SimConnect
+- Handles aircraft position data for offset spawning
 
 #### Message Parser
 - Parses incoming messages from JavaScript
@@ -172,7 +178,7 @@ worldFlightPedia_wasm_module/
 
 ### JavaScript Integration
 
-#### Sending POI Coordinates to WASM FORMAT
+#### Sending POI Coordinates to WASM
 
 ```javascript
 // Send POI coordinates from JavaScript
@@ -186,6 +192,7 @@ const poiData = {
     count: 3
 };
 
+// Send via Coherent
 Coherent.call("OnMessageFromJs", JSON.stringify(poiData));
 ```
 
@@ -200,7 +207,7 @@ Coherent.on("OnMessageFromWasm", (message) => {
         console.log("WASM module initialized successfully");
         // Send initial POI data
     } else if (message.startsWith("ack:")) {
-        console.log("Acknowledgment received");
+        console.log("Acknowledgment received:", message);
     }
 });
 ```
@@ -222,6 +229,13 @@ SimVar.SetSimVarValue("L:WFP_StartFlight", "number", 0);
 ```javascript
 // Move to next POI in sequence
 SimVar.SetSimVarValue("L:WFP_NextPoi", "number", 1);
+```
+
+#### Spawn Cube Near Aircraft
+
+```javascript
+// Spawn a cube object at offset position from user aircraft
+SimVar.SetSimVarValue("L:WFP_SPAWN_CUBE", "number", 1);
 ```
 
 ### Keyboard Controls
@@ -247,11 +261,24 @@ The module also responds to keyboard inputs (configured in SimConnect):
 
 | Request ID | Purpose |
 |------------|---------|
-| `REQUEST_ADD_LASERS` (101) | Create SimObject |
-| `REQUEST_REMOVE_LASERS` (201) | Remove SimObject |
+| `REQUEST_ADD_LASERS` (101) | Create laser_red SimObject |
+| `REQUEST_REMOVE_LASERS` (201) | Remove laser_red SimObject |
+| `REQUEST_USER_POS_FOR_CUBE` (301) | Request user aircraft position for cube spawn |
+| `REQUEST_ADD_CUBE` (401) | Create cube SimObject |
 | `REQUEST_LVAR_SPAWN` (1002) | L:VAR spawn monitoring |
 | `REQUEST_LVAR_STARTFLIGHT` (1003) | L:VAR flight start/stop |
 | `REQUEST_LVAR_NEXTPOI` (1004) | L:VAR next POI navigation |
+| `REQUEST_LVAR_SPAWN_CUBE` (1005) | L:VAR cube spawn trigger |
+
+### Data Definitions
+
+| Definition ID | Purpose |
+|---------------|---------|
+| `DEFINITION_LVAR_SPAWN` (1001) | L:spawnAllLasersRed variable |
+| `DEFINITION_LVAR_STARTFLIGHT` (1003) | L:WFP_StartFlight variable |
+| `DEFINITION_LVAR_NEXTPOI` (1004) | L:WFP_NextPoi variable |
+| `DEFINITION_LVAR_SPAWN_CUBE` (1005) | L:WFP_SPAWN_CUBE variable |
+| `DEFINITION_USER_POSITION` (2001) | User position (lat/lon/alt/heading) |
 
 ### Local Variables
 
@@ -259,7 +286,8 @@ The module also responds to keyboard inputs (configured in SimConnect):
 |----------|------|---------|
 | `L:WFP_StartFlight` | number | Start (1) or stop (0) flight |
 | `L:WFP_NextPoi` | number | Advance to next POI (1) |
-| `L:WFP_Spawn` | number | Manual spawn trigger |
+| `L:WFP_SPAWN_CUBE` | number | Spawn cube near aircraft (1) |
+| `L:spawnAllLasersRed` | number | Legacy spawn trigger |
 
 ## Development
 
@@ -273,6 +301,7 @@ module_init()
 │   ├── Register system events
 │   ├── Map keyboard inputs
 │   ├── Add data definitions for L:VARs
+│   ├── Add data definitions for user position
 │   └── Set dispatch callback
 ├── CommBus_Initialize()
 │   ├── Register JS message handler
@@ -286,6 +315,24 @@ module_deinit()
 └── SimConnectManager_Shutdown()
     └── Close SimConnect connection
 ```
+
+### SimObject Types
+
+The module supports spawning different SimObject types:
+
+- **laser_red**: POI marker objects spawned at ground level
+- **cube**: Test object spawned at aircraft offset position (right side)
+
+These SimObjects must be defined in your MSFS package's `sim.cfg`.
+
+### Offset Spawning System
+
+The module can calculate positions relative to the user aircraft:
+
+1. Requests aircraft position (lat, lon, alt, heading) via SimConnect
+2. Calculates offset position using heading and distance
+3. Spawns SimObject at computed coordinates
+4. Default offset: 50 meters to the right of aircraft
 
 ### Adding New Features
 
@@ -337,6 +384,45 @@ module_deinit()
    }
    ```
 
+#### Adding a New Local Variable
+
+1. Define request and data definition IDs in `Constants.h`:
+   ```cpp
+   enum eRequests {
+       // ...
+       REQUEST_LVAR_YOUR_VAR = 1006
+   };
+   
+   enum eDataDefs {
+       // ...
+       DEFINITION_LVAR_YOUR_VAR = 1006
+   };
+   ```
+
+2. Register in `SimConnectManager.cpp`:
+   ```cpp
+   SimConnect_AddToDataDefinition(g_hSimConnect, 
+       DEFINITION_LVAR_YOUR_VAR, 
+       "L:YourVariableName", 
+       "number");
+   
+   SimConnect_RequestDataOnSimObject(g_hSimConnect,
+       REQUEST_LVAR_YOUR_VAR,
+       DEFINITION_LVAR_YOUR_VAR,
+       SIMCONNECT_OBJECT_ID_USER,
+       SIMCONNECT_PERIOD_SECOND);
+   ```
+
+3. Handle in `DispatchHandler.cpp`:
+   ```cpp
+   case SIMCONNECT_RECV_ID_SIMOBJECT_DATA:
+       auto pObjData = (SIMCONNECT_RECV_SIMOBJECT_DATA*)pData;
+       if (pObjData->dwRequestID == REQUEST_LVAR_YOUR_VAR) {
+           // Handle your L:VAR change
+       }
+       break;
+   ```
+
 ## Debugging
 
 ### Enabling Debug Output
@@ -352,11 +438,15 @@ Debug messages are written to stderr and can be viewed in:
 [MSFS] SimConnect initialization...
 [MSFS] SimConnect opened successfully
 [MSFS] CommBus initialization...
+[MSFS] CommBus initialized and startup sent.
 [MSFS] module_init completed.
 [MSFS] Received from JS: {"type":"POI_COORDINATES",...}
 [MSFS] Parsed 3 POI coordinates from JS
+[MSFS] POI[0] = lat: 40.712800, lon: -74.006000
 [MSFS] L:WFP_StartFlight changed -> 1
 [MSFS] Spawned first POI at index 0 (40.712800, -74.006000)
+[MSFS] SpawnCubeNearAircraft: requested user position to compute spawn offset.
+[MSFS] Spawned 'cube' at 50.00m right of aircraft: lat=... lon=... alt=...
 ```
 
 ### Troubleshooting
@@ -367,6 +457,8 @@ Debug messages are written to stderr and can be viewed in:
 | No messages from JavaScript | Check Coherent bindings and CommBus registration |
 | SimObjects not spawning | Verify SimObject exists in sim.cfg and is properly defined |
 | L:VARs not updating | Confirm data definitions are correctly mapped |
+| Cube spawns at wrong position | Verify aircraft heading and position data are being received |
+| Objects remain after removal | Check that object IDs are properly tracked in `g_lasersIDs` |
 
 ## Performance Considerations
 
@@ -374,5 +466,26 @@ Debug messages are written to stderr and can be viewed in:
 - SimConnect callbacks are processed efficiently via dispatch handler
 - POI coordinates are stored in a simple vector for fast access
 - No external JSON libraries to keep WASM size small
+- Object ID tracking uses STL containers for automatic memory management
+- Offset calculations use optimized trigonometric functions
+
+## Technical Notes
+
+### Coordinate System
+- Latitude/Longitude in decimal degrees
+- Altitude in meters
+- Heading in degrees true (0-360)
+
+### Spawning Behavior
+- `OnGround = 1`: Object spawns at terrain elevation (altitude ignored)
+- `OnGround = 0`: Object spawns at specified altitude above MSL
+- POI objects default to ground level
+- Cube objects spawn at aircraft altitude
+
+### Communication Flow
+1. JavaScript sends JSON message via `OnMessageFromJs`
+2. WASM parses message and extracts data
+3. WASM processes data and performs actions
+4. WASM sends acknowledgment via `OnMessageFromWasm`
 
 **Note**: This module requires Microsoft Flight Simulator 2020 and the MSFS SDK to build and run.
