@@ -355,9 +355,15 @@ Triggered via WASM L:Vars:
 ## PRINCIPAL UI START FLIGHT WITH FIRST POI SHOWED NIGHT
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/cf215582-92f8-4d38-b8b7-d7edb468377a" />
 
-#3.1 VIDEO DEMO
+## PRINCIPAL UI START FLIGHT WITH HELP POP-UP SHOWED
+<img width="898" height="589" alt="image" src="https://github.com/user-attachments/assets/41c05fa0-18e3-41d7-9d3b-d11b6b3832ed" />
+
+
+### 3.1 VIDEO DEMO
 
 ## VIDEO DEMO RECORDED IN icao: SLVR, AEROPUERTO INTERNACIONAL VIRU VIRU, SANTA CRUZ, BOLIVIA, BUT THE WORLD FLIGHT PEDIA TOOLBAR WORK EVERYWHER IN THE WORLD OF MSFS2020!!
+##VOLUME UP IN THE REPRODUCTOR!!!
+
 https://github.com/user-attachments/assets/0e9294ee-4b5c-41c2-944a-6e078d13110f
 
 
