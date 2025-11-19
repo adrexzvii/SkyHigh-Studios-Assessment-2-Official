@@ -24,7 +24,7 @@ import { useSimVarToggle } from "../../hooks/simvar/useSimVarToggle";
 import { setSimVarSafe } from "../../utils/simvar/simvarUtils";
 import { useCommBus } from "../../hooks/comm/useCommBus";
 
-export default function TopBar({ onOpenHelp }) {
+export default function TopBar({ onOpenHelp, flightFinished = false, onFinishComplete = () => {} }) {
   // Hook controlling POI spawn toggle (SimVar: L:spawnAllLasersRed)
   const spawnPois = useSimVarToggle("L:spawnAllLasersRed");
   // Hook controlling flight tracking toggle (SimVar: L:WFP_StartFlight)
@@ -46,6 +46,27 @@ export default function TopBar({ onOpenHelp }) {
   // Refs for hide-sound handling (for Hide POIs)
   const hideSoundTimeoutRef = useRef(null);
   const delayedHideRef = useRef(null);
+  // Ref to ensure automatic finish logic runs only once per flightFinished true
+  const autoFinishRanRef = useRef(false);
+  // Disable state for the 'Show all POIs' button while flight is started
+  const LS_KEY_SPAWN_DISABLED = "wfp_spawn_btn_disabled";
+  const [spawnBtnDisabled, setSpawnBtnDisabled] = useState(() => {
+    try {
+      const raw = window.localStorage?.getItem(LS_KEY_SPAWN_DISABLED);
+      return raw ? JSON.parse(raw) : false;
+    } catch (_) {
+      return false;
+    }
+  });
+
+  // Persist spawnBtnDisabled to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      window.localStorage?.setItem(LS_KEY_SPAWN_DISABLED, JSON.stringify(spawnBtnDisabled));
+    } catch (e) {
+      console.warn('[TopBar] Failed saving spawnBtnDisabled to localStorage', e);
+    }
+  }, [spawnBtnDisabled]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -154,6 +175,28 @@ export default function TopBar({ onOpenHelp }) {
     }, 3700);
   };
 
+  // If the parent signals the route finished, run the finish/stop actions automatically
+  useEffect(() => {
+    if (flightFinished) {
+      if (autoFinishRanRef.current) return;
+      autoFinishRanRef.current = true;
+
+      // Ensure StartFlight simvar toggled off
+      try {
+        if (flight.value) flight.toggle();
+      } catch (e) { console.warn('[TopBar] Error toggling flight during auto-finish', e); }
+
+      // Trigger stop volume and stop sound
+      try { setSimVarSafe("L:WFP_STOP_VOLUME", "Number", 100); } catch (_){ }
+      if (delayedStopRef.current) { clearTimeout(delayedStopRef.current); delayedStopRef.current = null; }
+      delayedStopRef.current = setTimeout(() => { toggleStopSound(); delayedStopRef.current = null; }, 1000);
+      // Do not auto-clear flightFinished here; leave it for user acknowledgement (Finish Flight button)
+    } else {
+      // Reset auto-run guard when parent clears the finished flag
+      autoFinishRanRef.current = false;
+    }
+  }, [flightFinished]);
+
   return (
     <>
       {/* Container bar: fixed height, horizontal layout */}
@@ -202,6 +245,7 @@ export default function TopBar({ onOpenHelp }) {
           {/* Toggle all POIs visibility in MSFS */}
           <Tooltip title="Show/Hide all POIs in MSFS">
             <Button
+              disabled={spawnBtnDisabled}
               onClick={() => {
                 const willShow = !spawnPois.value;
                 spawnPois.toggle();
@@ -242,47 +286,75 @@ export default function TopBar({ onOpenHelp }) {
             </Button>
           </Tooltip>
 
-          {/* Start or stop flight tracking */}
-          <Tooltip title="Start/Stop Flight Tracking">
-            <Button
-              onClick={() => {
-                const willStart = !flight.value;
-                flight.toggle();
-                if (willStart) {
+          {/* Start/Stop or Finish Flight control */}
+          {flightFinished ? (
+            <Tooltip title="Finish Flight">
+              <Button
+                onClick={() => {
+                  // Ensure the flight simvar is off
                   try {
-                    setSimVarSafe("L:WFP_START_VOLUME", "Number", 100);
-                  } catch {}
+                    if (flight.value) flight.toggle();
+                  } catch (e) { console.warn('[TopBar] Error toggling flight during finish', e); }
 
-                  // trigger the start sound after 1 second
-                  if (delayedSoundRef.current) {
-                    clearTimeout(delayedSoundRef.current);
-                    delayedSoundRef.current = null;
-                  }
-                  delayedSoundRef.current = setTimeout(() => {
-                    toggleStartSound();
-                    delayedSoundRef.current = null;
-                  }, 1000);
-                } else {
-                  // stopping flight: set stop volume and trigger stop sound after 1s
-                  try {
-                    setSimVarSafe("L:WFP_STOP_VOLUME", "Number", 100);
-                  } catch {}
+                  // Trigger stop-volume and stop-sound sequence for finish
+                  try { setSimVarSafe("L:WFP_STOP_VOLUME", "Number", 100); } catch (_){ }
+                  if (delayedStopRef.current) { clearTimeout(delayedStopRef.current); delayedStopRef.current = null; }
+                  delayedStopRef.current = setTimeout(() => { toggleStopSound(); delayedStopRef.current = null; }, 1000);
 
-                  if (delayedStopRef.current) {
-                    clearTimeout(delayedStopRef.current);
-                    delayedStopRef.current = null;
+                  // Notify parent that finish was completed so UI can update
+                  try { onFinishComplete(); } catch (e) { console.warn('[TopBar] onFinishComplete threw', e); }
+                }}
+                sx={{ color: palette.textPrimary, "&:hover": { bgcolor: palette.accentHover } }}
+              >
+                Finish Flight
+              </Button>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Start/Stop Flight Tracking">
+              <Button
+                onClick={() => {
+                  const willStart = !flight.value;
+                  flight.toggle();
+                    if (willStart) {
+                      // Disable the Show POIs button while flight is started
+                      try { setSpawnBtnDisabled(true); } catch (_) {}
+                    try {
+                      setSimVarSafe("L:WFP_START_VOLUME", "Number", 100);
+                    } catch {}
+
+                    // trigger the start sound after 1 second
+                    if (delayedSoundRef.current) {
+                      clearTimeout(delayedSoundRef.current);
+                      delayedSoundRef.current = null;
+                    }
+                    delayedSoundRef.current = setTimeout(() => {
+                      toggleStartSound();
+                      delayedSoundRef.current = null;
+                    }, 1000);
+                  } else {
+                    // Re-enable the Show POIs button when flight stops
+                    try { setSpawnBtnDisabled(false); } catch (_) {}
+                    // stopping flight: set stop volume and trigger stop sound after 1s
+                    try {
+                      setSimVarSafe("L:WFP_STOP_VOLUME", "Number", 100);
+                    } catch {}
+
+                    if (delayedStopRef.current) {
+                      clearTimeout(delayedStopRef.current);
+                      delayedStopRef.current = null;
+                    }
+                    delayedStopRef.current = setTimeout(() => {
+                      toggleStopSound();
+                      delayedStopRef.current = null;
+                    }, 1000);
                   }
-                  delayedStopRef.current = setTimeout(() => {
-                    toggleStopSound();
-                    delayedStopRef.current = null;
-                  }, 1000);
-                }
-              }}
-              sx={{ color: palette.textPrimary, "&:hover": { bgcolor: palette.accentHover } }}
-            >
-              {flight.value ? "Stop Flight" : "Start Flight"}
-            </Button>
-          </Tooltip>
+                }}
+                sx={{ color: palette.textPrimary, "&:hover": { bgcolor: palette.accentHover } }}
+              >
+                {flight.value ? "Stop Flight" : "Start Flight"}
+              </Button>
+            </Tooltip>
+          )}
 
           {/* Open help dialog */}
           <Tooltip title="Help">

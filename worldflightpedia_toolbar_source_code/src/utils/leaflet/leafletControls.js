@@ -120,6 +120,7 @@ export function addPausePlayControl(map, { SimVar, pauseRef, updatePauseButtonRe
           if (typeof SimVar?.SetSimVarValue === 'function') { SimVar.SetSimVarValue('K:PAUSE_SET', 'Bool', newPaused ? 1 : 0); }
           else { console.warn('[MapView] SimVar not available to toggle pause'); }
           pauseRef.current = newPaused; updatePauseUI();
+          try { window?.localStorage?.setItem('wfp_map_pause', JSON.stringify(Boolean(newPaused))); } catch (_) {}
         } catch (err) { console.warn('[MapView] Failed to toggle pause state', err); }
       });
       L.DomEvent.disableClickPropagation(container); L.DomEvent.disableScrollPropagation(container);

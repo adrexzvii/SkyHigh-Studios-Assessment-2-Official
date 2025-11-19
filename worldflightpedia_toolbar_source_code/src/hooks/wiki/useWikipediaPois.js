@@ -21,6 +21,7 @@
 import { useCallback } from "react";
 import { fetchGeoSearch } from "../../utils/wiki/wikipediaApi";
 import { setSimVarSafe } from "../../utils/simvar/simvarUtils";
+import { haversine } from "../../utils/geo/haversine";
 
 export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWasm }) {
   const fetchPoisAroundPlane = useCallback(async () => {
@@ -42,8 +43,29 @@ export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWa
 
       const fetchedPois = await fetchGeoSearch(lat, lon);
       if (fetchedPois && fetchedPois.length) {
+        // Remove POIs that are closer than or equal to 0.1 km (100m) to any
+        // previously kept POI. This avoids arrival detection failures when
+        // POIs are too close together.
+        const deduped = [];
+        const thresholdKm = 0.1; // 100 meters
+        for (const poi of fetchedPois) {
+          if (typeof poi.lat !== 'number' || typeof poi.lon !== 'number') continue;
+          let tooClose = false;
+          for (const kept of deduped) {
+            try {
+              const d = haversine(poi.lat, poi.lon, kept.lat, kept.lon);
+              if (d <= thresholdKm) { tooClose = true; break; }
+            } catch (e) {
+              // If haversine fails for any reason, skip distance check for this pair
+              console.warn('[useWikipediaPois] haversine failed', e);
+            }
+          }
+          if (!tooClose) deduped.push(poi);
+        }
+
+        const finalPois = deduped.length ? deduped : fetchedPois;
         // Add timestamp to force React to detect change even if POIs are identical
-        const poisWithTimestamp = fetchedPois.map(poi => ({
+        const poisWithTimestamp = finalPois.map(poi => ({
           ...poi,
           _fetchTimestamp: Date.now()
         }));

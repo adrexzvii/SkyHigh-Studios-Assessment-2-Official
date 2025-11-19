@@ -46,6 +46,7 @@ export function useRoutePlanning({
   palette,
   arrivalThresholdKm = 0.2,
   onArrive,
+  onRouteComplete,
   pauseRef,
   updatePauseButtonRef
 }) {
@@ -304,6 +305,28 @@ export function useRoutePlanning({
             if (typeof updatePauseButtonRef?.current === 'function') {
               try { updatePauseButtonRef.current(); } catch (_) {}
             }
+            // Attempt to open the POI popup in the map UI if available
+            try {
+              if (typeof window !== 'undefined' && typeof window.__openPoiPopup === 'function') {
+                try {
+                  // Open immediately
+                  window.__openPoiPopup(target);
+                } catch (e) {
+                  console.warn('[useRoutePlanning] window.__openPoiPopup threw on immediate call', e);
+                }
+
+                // Open again after 1 second to ensure popup reliably appears
+                try {
+                  setTimeout(() => {
+                    try { window.__openPoiPopup(target); } catch (e) { console.warn('[useRoutePlanning] window.__openPoiPopup threw on delayed call', e); }
+                  }, 1000);
+                } catch (e) {
+                  console.warn('[useRoutePlanning] Failed to schedule delayed openPoiPopup', e);
+                }
+              }
+            } catch (e) {
+              console.warn('[useRoutePlanning] Error calling openPoiPopup', e);
+            }
           } else {
             console.log("[useRoutePlanning Arrival]  Auto-pause skipped - Start Flight not active");
           }
@@ -366,7 +389,18 @@ export function useRoutePlanning({
         setCompletedSegments(prev => [...prev, { from: [planePos.lat, planePos.lng], to: targetPos }]);
         setRemainingPois(prev => prev.filter(p => p.id !== target.id));
         console.log("[useRoutePlanning] Route updated, remaining POIs:", routeMirrorRef.current.length);
-        
+
+        // If no more POIs remain, notify consumer that the ordered route is complete
+        try {
+          const updatedLength = Array.isArray(routeMirrorRef.current) ? routeMirrorRef.current.length : 0;
+          if (updatedLength === 0) {
+            console.log("[useRoutePlanning] Ordered route completed -> calling onRouteComplete");
+            try { if (typeof onRouteComplete === 'function') onRouteComplete(); } catch (e) { console.warn('[useRoutePlanning] onRouteComplete threw', e); }
+          }
+        } catch (e) {
+          console.warn('[useRoutePlanning] Error while checking route completion', e);
+        }
+
         onArrive?.(target);
       }
     }, 1000);

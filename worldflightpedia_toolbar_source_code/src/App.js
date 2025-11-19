@@ -29,6 +29,8 @@ export default function App() {
   const [pois, setPois] = useState([]);
   const [selectedPoi, setSelectedPoi] = useState(null);
   const [userCoords, setUserCoords] = useState({ lat: -17.389, lon: -66.156 }); // Default: Cochabamba, Bolivia
+  // Flag set when MapView reports the ordered route is complete
+  const [flightFinished, setFlightFinished] = useState(false);
   
   // Help overlay state (independent from context)
   const [helpOpen, setHelpOpen] = useState(false);
@@ -64,7 +66,11 @@ export default function App() {
       }}
     >
       {/* Top Navigation Bar */}
-      <TopBar onOpenHelp={() => setHelpOpen(true)} />
+      <TopBar
+        onOpenHelp={() => setHelpOpen(true)}
+        flightFinished={flightFinished}
+        onFinishComplete={() => setFlightFinished(false)}
+      />
       
       {/* Main Content Grid: Sidebar + Map */}
       <Box sx={{ 
@@ -100,11 +106,9 @@ export default function App() {
         {/* Right Side: Map View with POI markers and route planning */}
         <div style={{ width: "100%", height: "100%" }}>
           <MapView
-            
             userCoords={userCoords}
-           
             setUserCoords={setUserCoords}
-            // onSendToWasm={handleSendToWasm}
+            onRouteComplete={() => setFlightFinished(true)}
           />
         </div>
       </Box>

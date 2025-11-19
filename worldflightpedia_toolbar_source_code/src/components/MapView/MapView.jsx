@@ -37,6 +37,7 @@ import { sendPoisToWasm as sendPoisToWasmUtil } from "../../utils/comm/sendPoisT
 export default function MapView({ 
   userCoords = {}, 
   setUserCoords,
+  onRouteComplete, // optional callback to notify parent when ordered route completes
 }) {
     const { pois = [], selectedPoi, setSelectedPoi, setPois } = usePoiContext();
     const { send, isReady } = useCommBus();
@@ -48,13 +49,11 @@ export default function MapView({
   const resizeObserverRef = useRef(null); // Tracks container size to invalidate Leaflet
   const pauseRef = useRef(false); // Track local pause state for pause/play control
     
-    // LocalStorage keys for MapView state
+    // LocalStorage keys for MapView state (route/POI persistence disabled per request)
     const LS_KEYS = {
       followPlane: "wfp_map_follow_plane",
       pause: "wfp_map_pause",
-      remainingPois: "wfp_map_remaining_pois",
-      orderedRoute: "wfp_map_ordered_route",
-      completedSegments: "wfp_map_completed_segments",
+      // remainingPois / orderedRoute / completedSegments persistence removed
     };
     
     // Flight tracking state (load from localStorage)
@@ -79,6 +78,7 @@ export default function MapView({
       arrivalThresholdKm: 0.1, // 100m threshold for arrival
       pauseRef,
       updatePauseButtonRef
+      , onRouteComplete
     });
 
     // Route tracking & arrivals handled entirely by useRoutePlanning hook.
@@ -89,6 +89,8 @@ export default function MapView({
         const savedPause = window.localStorage?.getItem(LS_KEYS.pause);
         if (savedPause !== null) {
           pauseRef.current = JSON.parse(savedPause);
+          // If the pause control exists, refresh its UI to reflect stored state
+          try { if (typeof updatePauseButtonRef?.current === 'function') updatePauseButtonRef.current(); } catch (_) {}
         }
       } catch {}
       
@@ -101,14 +103,9 @@ export default function MapView({
       } catch {}
     }, [followPlane]);
 
-    // Persist route planning state (remaining POIs, route, completed segments)
-    useEffect(() => {
-      try {
-        window.localStorage?.setItem(LS_KEYS.remainingPois, JSON.stringify(remainingPois));
-        window.localStorage?.setItem(LS_KEYS.orderedRoute, JSON.stringify(orderedRoute));
-        window.localStorage?.setItem(LS_KEYS.completedSegments, JSON.stringify(completedSegments));
-      } catch {}
-    }, [remainingPois, orderedRoute, completedSegments]);
+    // Route planning persistence disabled: do not save remaining/ordered/completed route state
+    // per user request (wfp_map_remaining_pois, wfp_map_ordered_route,
+    // wfp_map_completed_segments are intentionally NOT stored).
 
     /**
      * Sync followPlane state with ref for use in Leaflet controls
