@@ -32,7 +32,7 @@ export function nearestNeighborOrder(start, points) {
   if (!start || !Array.isArray(points)) return [];
 
   // Clone to avoid in-place modifications of caller array
-  const pts = points.map(p => ({ ...p }));
+  const pts = points.map((p) => ({ ...p }));
   const order = [];
   let cur = { lat: start.lat, lon: start.lon };
 
@@ -72,11 +72,11 @@ export function nearestNeighborOrder(start, points) {
 export function normalizePois(pois) {
   if (!Array.isArray(pois)) return [];
   return pois
-    .map(p => ({
-      id: p.id ?? (p.pageid ?? `${p.lat}-${p.lon}`),
+    .map((p) => ({
+      id: p.id ?? p.pageid ?? `${p.lat}-${p.lon}`,
       lat: typeof p.lat === "number" ? p.lat : Number(p.lat),
       lon: typeof p.lon === "number" ? p.lon : Number(p.lon),
-      title: p.title ?? p.name ?? "Unknown POI"
+      title: p.title ?? p.name ?? "Unknown POI",
     }))
-    .filter(p => !isNaN(p.lat) && !isNaN(p.lon));
+    .filter((p) => !isNaN(p.lat) && !isNaN(p.lon));
 }

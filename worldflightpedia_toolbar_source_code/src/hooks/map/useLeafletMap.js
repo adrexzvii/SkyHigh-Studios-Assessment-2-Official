@@ -1,6 +1,6 @@
 /**
  * useLeafletMap - Manages Leaflet map initialization and lifecycle
- * 
+ *
  * Responsibilities:
  * - Initialize Leaflet map instance with OpenStreetMap tiles
  * - Create and position plane marker with custom SVG icon
@@ -8,7 +8,7 @@
  * - Create POI layer group
  * - Handle map resize observation
  * - Clean up resources on unmount
- * 
+ *
  * @param {Object} params
  * @param {import('react').MutableRefObject<any>} params.containerRef - Map container DOM ref
  * @param {import('react').MutableRefObject<any>} params.mapRef - Map instance ref (output)
@@ -26,9 +26,14 @@
  * @param {import('react').MutableRefObject<any>} params.pauseBlinkIntervalRef - Pause blink interval ref
  */
 
-import { useEffect } from 'react';
-import L from 'leaflet';
-import { addFollowControl, addFetchPoisControl, addPausePlayControl, addCustomZoomControl } from '../../utils/leaflet/leafletControls';
+import { useEffect } from "react";
+import L from "leaflet";
+import {
+  addFollowControl,
+  addFetchPoisControl,
+  addPausePlayControl,
+  addCustomZoomControl,
+} from "../../utils/leaflet/leafletControls";
 
 /**
  * Initializes & maintains a Leaflet map instance. Side-effect only; returns void.
@@ -48,7 +53,7 @@ export function useLeafletMap({
   fetchPoisAroundPlane,
   pauseRef,
   updatePauseButtonRef,
-  pauseBlinkIntervalRef
+  pauseBlinkIntervalRef,
 }) {
   useEffect(() => {
     // Clean up existing map
@@ -58,18 +63,22 @@ export function useLeafletMap({
     }
 
     if (!containerRef.current) return;
-    if (typeof userCoords.lat !== 'number' || typeof userCoords.lon !== 'number') return;
+    if (
+      typeof userCoords.lat !== "number" ||
+      typeof userCoords.lon !== "number"
+    )
+      return;
 
-  // Create new map instance
-    const map = L.map(containerRef.current, { 
+    // Create new map instance
+    const map = L.map(containerRef.current, {
       preferCanvas: true,
       zoomControl: false,
-      attributionControl: false
+      attributionControl: false,
     }).setView([userCoords.lat, userCoords.lon], 13);
 
     // Add OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
     mapRef.current = map;
@@ -77,7 +86,7 @@ export function useLeafletMap({
 
     // Create custom plane icon with SVG
     const planeIcon = L.divIcon({
-      className: 'plane-icon',
+      className: "plane-icon",
       html: `
         <svg viewBox="0 0 64 64" class="plane-svg" width="40" height="40">
           <path fill="#006b4a" d="M30 4 L34 4 L36 22 L56 28 L56 32 L36 34 L34 60 L30 60 L28 34 L8 32 L8 28 L28 22 Z"/>
@@ -87,23 +96,43 @@ export function useLeafletMap({
       iconAnchor: [20, 20],
     });
 
-    planeMarkerRef.current = L.marker([userCoords.lat, userCoords.lon], { icon: planeIcon }).addTo(map);
+    planeMarkerRef.current = L.marker([userCoords.lat, userCoords.lon], {
+      icon: planeIcon,
+    }).addTo(map);
 
     // Add custom controls (refactored to utils)
     addCustomZoomControl(mapRef.current, { palette });
-    addFollowControl(mapRef.current, { palette, followRef, setFollowPlane, updateFollowButtonRef });
+    addFollowControl(mapRef.current, {
+      palette,
+      followRef,
+      setFollowPlane,
+      updateFollowButtonRef,
+    });
     addFetchPoisControl(mapRef.current, { fetchPoisAroundPlane });
-    addPausePlayControl(mapRef.current, { SimVar, pauseRef, updatePauseButtonRef, pauseBlinkIntervalRef });
+    addPausePlayControl(mapRef.current, {
+      SimVar,
+      pauseRef,
+      updatePauseButtonRef,
+      pauseBlinkIntervalRef,
+    });
 
     // Force initial size calculation (container may have been hidden/sized late)
-    try { map.invalidateSize(); } catch (_) {}
-    setTimeout(() => { try { map.invalidateSize(); } catch (_) {} }, 150);
+    try {
+      map.invalidateSize();
+    } catch (_) {}
+    setTimeout(() => {
+      try {
+        map.invalidateSize();
+      } catch (_) {}
+    }, 150);
 
     // Resize observer to keep Leaflet layout correct without manual window resize
-    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+    if (containerRef.current && typeof ResizeObserver !== "undefined") {
       resizeObserverRef.current = new ResizeObserver(() => {
         if (mapRef.current) {
-          try { mapRef.current.invalidateSize(); } catch (_) {}
+          try {
+            mapRef.current.invalidateSize();
+          } catch (_) {}
         }
       });
       resizeObserverRef.current.observe(containerRef.current);
@@ -113,12 +142,16 @@ export function useLeafletMap({
     return () => {
       // Disconnect resize observer first
       if (resizeObserverRef.current) {
-        try { resizeObserverRef.current.disconnect(); } catch (_) {}
+        try {
+          resizeObserverRef.current.disconnect();
+        } catch (_) {}
         resizeObserverRef.current = null;
       }
       // Clear blinking interval if active
       if (pauseBlinkIntervalRef.current) {
-        try { clearInterval(pauseBlinkIntervalRef.current); } catch (_) {}
+        try {
+          clearInterval(pauseBlinkIntervalRef.current);
+        } catch (_) {}
         pauseBlinkIntervalRef.current = null;
       }
       map.remove();
@@ -140,6 +173,6 @@ export function useLeafletMap({
     fetchPoisAroundPlane,
     pauseRef,
     updatePauseButtonRef,
-    pauseBlinkIntervalRef
+    pauseBlinkIntervalRef,
   ]);
 }

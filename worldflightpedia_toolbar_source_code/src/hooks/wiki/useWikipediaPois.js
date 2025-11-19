@@ -23,7 +23,12 @@ import { fetchGeoSearch } from "../../utils/wiki/wikipediaApi";
 import { setSimVarSafe } from "../../utils/simvar/simvarUtils";
 import { haversine } from "../../utils/geo/haversine";
 
-export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWasm }) {
+export function useWikipediaPois({
+  setPois,
+  setUserCoords,
+  isReady,
+  sendPoisToWasm,
+}) {
   const fetchPoisAroundPlane = useCallback(async () => {
     // Avoid sending/processing route payloads until CommBus is ready
     if (!isReady) return;
@@ -37,9 +42,8 @@ export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWa
 
       setUserCoords({ lat, lon });
 
-      // Spawn a cube 
-        setSimVarSafe("L:WFP_SPAWN_CUBE", "Bool", 1);
-      
+      // Spawn a cube
+      setSimVarSafe("L:WFP_SPAWN_CUBE", "Bool", 1);
 
       const fetchedPois = await fetchGeoSearch(lat, lon);
       if (fetchedPois && fetchedPois.length) {
@@ -49,15 +53,19 @@ export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWa
         const deduped = [];
         const thresholdKm = 0.1; // 100 meters
         for (const poi of fetchedPois) {
-          if (typeof poi.lat !== 'number' || typeof poi.lon !== 'number') continue;
+          if (typeof poi.lat !== "number" || typeof poi.lon !== "number")
+            continue;
           let tooClose = false;
           for (const kept of deduped) {
             try {
               const d = haversine(poi.lat, poi.lon, kept.lat, kept.lon);
-              if (d <= thresholdKm) { tooClose = true; break; }
+              if (d <= thresholdKm) {
+                tooClose = true;
+                break;
+              }
             } catch (e) {
               // If haversine fails for any reason, skip distance check for this pair
-              console.warn('[useWikipediaPois] haversine failed', e);
+              console.warn("[useWikipediaPois] haversine failed", e);
             }
           }
           if (!tooClose) deduped.push(poi);
@@ -65,9 +73,9 @@ export function useWikipediaPois({ setPois, setUserCoords, isReady, sendPoisToWa
 
         const finalPois = deduped.length ? deduped : fetchedPois;
         // Add timestamp to force React to detect change even if POIs are identical
-        const poisWithTimestamp = finalPois.map(poi => ({
+        const poisWithTimestamp = finalPois.map((poi) => ({
           ...poi,
-          _fetchTimestamp: Date.now()
+          _fetchTimestamp: Date.now(),
         }));
         setPois(poisWithTimestamp);
         // Send ordered POI coordinates to WASM using current plane position as start

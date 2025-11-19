@@ -1,14 +1,14 @@
 /**
  * PoiContext - Global state management for Points of Interest
- * 
+ *
  * Provides centralized state for POI data across the application using
  * React Context API. Eliminates prop drilling and enables any component
  * to access or modify POI state.
- * 
+ *
  * State managed:
  * - pois: Array of all available POI objects
  * - selectedPoi: Currently selected POI object (null if none selected)
- * 
+ *
  * @module PoiContext
  */
 
@@ -19,10 +19,10 @@ const PoiContext = createContext();
 
 /**
  * PoiProvider - Context provider component
- * 
+ *
  * Wraps the application tree and provides POI state to all children.
  * Manages pois list and selectedPoi state internally.
- * 
+ *
  * @component
  * @param {Object} props
  * @param {React.ReactNode} props.children - Child components that need access to POI state
@@ -31,7 +31,7 @@ const PoiContext = createContext();
 export function PoiProvider({ children }) {
   // Selected POI state - tracks which POI is currently active
   const [selectedPoi, setSelectedPoi] = useState(null);
-  
+
   // POI list state - array of all available POIs
   const [pois, setPois] = useState([]);
 
@@ -48,9 +48,9 @@ export function PoiProvider({ children }) {
 
 /**
  * usePoiContext - Custom hook to access POI context
- * 
+ *
  * Provides access to POI state and setters. Must be used within PoiProvider.
- * 
+ *
  * @returns {Object} POI context value
  * @returns {Array} pois - Array of POI objects
  * @returns {Function} setPois - Function to update POI list

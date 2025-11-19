@@ -10,7 +10,14 @@
  * @param {Function} props.onClose - Callback invoked when dialog requests close
  * @returns {JSX.Element} The rendered dialog
  */
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, List } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  List,
+} from "@mui/material";
 import palette from "../../theme/palette";
 
 export default function HelpDialog({ open, onClose }) {
@@ -34,9 +41,7 @@ export default function HelpDialog({ open, onClose }) {
 
       {/* Content area where help items can be listed */}
       <DialogContent>
-        <List>
-          {/* Future help items */}
-        </List>
+        <List>{/* Future help items */}</List>
       </DialogContent>
 
       {/* Footer actions: primary Close button */}

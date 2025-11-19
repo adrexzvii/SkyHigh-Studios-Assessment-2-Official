@@ -60,7 +60,9 @@ export function useCommBus({ autoRegister = true, onMessage } = {}) {
           onMessage?.(dataStr);
         });
       } else {
-        addLog("CommBusListener.on not found (no incoming messages will be received).");
+        addLog(
+          "CommBusListener.on not found (no incoming messages will be received)."
+        );
       }
 
       startedRef.current = true;

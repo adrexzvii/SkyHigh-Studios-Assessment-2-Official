@@ -21,7 +21,14 @@
  */
 import { nearestNeighborOrder } from "../geo/routeUtils";
 
-export function sendPoisToWasm({ poisArray, start, planeMarkerRef, userCoords, isReady, send }) {
+export function sendPoisToWasm({
+  poisArray,
+  start,
+  planeMarkerRef,
+  userCoords,
+  isReady,
+  send,
+}) {
   if (!isReady) {
     console.warn("[sendPoisToWasm] CommBus not ready yet");
     return;
@@ -30,44 +37,68 @@ export function sendPoisToWasm({ poisArray, start, planeMarkerRef, userCoords, i
   try {
     // Determine start position: prefer explicit start, else plane marker, else userCoords
     let startLat, startLon;
-    if (start && typeof start.lat === 'number' && typeof start.lon === 'number') {
-      startLat = start.lat; startLon = start.lon;
+    if (
+      start &&
+      typeof start.lat === "number" &&
+      typeof start.lon === "number"
+    ) {
+      startLat = start.lat;
+      startLon = start.lon;
     } else {
       const planeLatLng = planeMarkerRef?.current?.getLatLng?.();
       if (planeLatLng) {
-        startLat = planeLatLng.lat; startLon = planeLatLng.lng;
-      } else if (typeof userCoords?.lat === 'number' && typeof userCoords?.lon === 'number') {
-        startLat = userCoords.lat; startLon = userCoords.lon;
+        startLat = planeLatLng.lat;
+        startLon = planeLatLng.lng;
+      } else if (
+        typeof userCoords?.lat === "number" &&
+        typeof userCoords?.lon === "number"
+      ) {
+        startLat = userCoords.lat;
+        startLon = userCoords.lon;
       }
     }
 
-    const startCoord = (typeof startLat === 'number' && typeof startLon === 'number')
-      ? { lat: startLat, lon: startLon }
-      : null;
+    const startCoord =
+      typeof startLat === "number" && typeof startLon === "number"
+        ? { lat: startLat, lon: startLon }
+        : null;
 
     // Filter to valid coordinate objects
     const validPois = Array.isArray(poisArray)
-      ? poisArray.filter(p => typeof p?.lat === 'number' && typeof p?.lon === 'number')
+      ? poisArray.filter(
+          (p) => typeof p?.lat === "number" && typeof p?.lon === "number"
+        )
       : [];
 
     // Order using nearest neighbor if we have a starting point
-    const ordered = startCoord ? nearestNeighborOrder(startCoord, validPois) : validPois;
+    const ordered = startCoord
+      ? nearestNeighborOrder(startCoord, validPois)
+      : validPois;
 
     // Create simplified JSON with only coordinates
-    const poisCoordinates = ordered.map(poi => ({ lat: poi.lat, lon: poi.lon }));
+    const poisCoordinates = ordered.map((poi) => ({
+      lat: poi.lat,
+      lon: poi.lon,
+    }));
 
     // Create payload for WASM
     const payload = {
       type: "POI_COORDINATES",
       data: poisCoordinates,
-      count: poisCoordinates.length
+      count: poisCoordinates.length,
     };
 
-    console.log("[sendPoisToWasm] Sending ordered POI coordinates to WASM:", payload);
+    console.log(
+      "[sendPoisToWasm] Sending ordered POI coordinates to WASM:",
+      payload
+    );
 
     send("OnMessageFromJs", payload);
     console.log("[sendPoisToWasm] Ordered POI coordinates sent successfully");
   } catch (err) {
-    console.error("[sendPoisToWasm] Error preparing ordered POIs for WASM:", err);
+    console.error(
+      "[sendPoisToWasm] Error preparing ordered POIs for WASM:",
+      err
+    );
   }
 }

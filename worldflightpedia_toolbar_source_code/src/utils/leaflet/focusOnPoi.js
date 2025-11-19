@@ -11,10 +11,14 @@
  * @param {React.MutableRefObject} options.followRef - Ref pointing to followPlane boolean
  * @param {React.MutableRefObject} options.updateFollowButtonRef - Ref to follow button updater function
  */
-export function focusOnPoiUtil(map, poi, { setFollowPlane, followRef, updateFollowButtonRef }) {
+export function focusOnPoiUtil(
+  map,
+  poi,
+  { setFollowPlane, followRef, updateFollowButtonRef }
+) {
   if (map && poi?.lat && poi?.lon) {
     // Disable follow plane mode
-    if (typeof setFollowPlane === 'function') setFollowPlane(false);
+    if (typeof setFollowPlane === "function") setFollowPlane(false);
     if (followRef) followRef.current = false;
 
     // Update the follow button UI if the update function exists
@@ -23,7 +27,7 @@ export function focusOnPoiUtil(map, poi, { setFollowPlane, followRef, updateFoll
         updateFollowButtonRef.current();
       } catch (e) {
         // swallow UI update errors to avoid breaking focus behavior
-        console.warn('[focusOnPoiUtil] updateFollowButtonRef threw', e);
+        console.warn("[focusOnPoiUtil] updateFollowButtonRef threw", e);
       }
     }
 

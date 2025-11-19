@@ -8,7 +8,9 @@
  */
 
 /* Ensures map and popups render correctly */
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
 }
 
@@ -23,19 +25,19 @@ html, body, #root {
 }
 
 /* POI Popup styling */
-.poi-popup { 
-  font-size: 14px; 
+.poi-popup {
+  font-size: 14px;
 }
 
-.poi-popup .poi-desc { 
-  margin-top: 6px; 
-  color: #444; 
-  font-size: 13px; 
+.poi-popup .poi-desc {
+  margin-top: 6px;
+  color: #444;
+  font-size: 13px;
 }
 
 /* POI icon styling */
-.poi-icon svg { 
-  display: block; 
+.poi-icon svg {
+  display: block;
 }
 
 /* Custom icon-button style using theme accent color
@@ -48,19 +50,19 @@ html, body, #root {
      fill, and `background-color` for the button background.
 */
 icon-button.Reduce.nodrag.condensed-interactive {
-  background-color: #00E46A !important;
+  background-color: #00e46a !important;
 }
 
 icon-button.Maximize.nodrag.condensed-interactive {
-  background-color: #00E46A !important;
+  background-color: #00e46a !important;
 }
 
 icon-button.Extern.nodrag.condensed-interactive {
-  background-color: #00E46A !important;
+  background-color: #00e46a !important;
 }
 
 icon-button.Close.nodrag.condensed-interactive {
-  background-color: #00E46A !important;
+  background-color: #00e46a !important;
 }
 
 /* Make SVG icons inherit the host color for fills/strokes. This

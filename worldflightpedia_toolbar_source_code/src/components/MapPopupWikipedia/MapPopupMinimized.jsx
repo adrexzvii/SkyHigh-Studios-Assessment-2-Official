@@ -1,9 +1,9 @@
 /**
  * MapPopupMinimized - Minimized view of POI popup
- * 
+ *
  * Displays a compact version of the POI popup showing only the title
  * and an expand button to restore the full view.
- * 
+ *
  * @param {string} title - POI title to display
  * @param {Function} onExpand - Callback to expand the popup back to full view
  */
@@ -32,8 +32,10 @@ export default function MapPopupMinimized({ title, onExpand }) {
         }}
       >
         {/* POI title - truncated if too long */}
-        <Typography sx={{color:"text.primary"}} fontWeight={600}>{title}</Typography>
-        
+        <Typography sx={{ color: "text.primary" }} fontWeight={600}>
+          {title}
+        </Typography>
+
         {/* Expand button to restore full popup */}
         <IconButton size="small" onClick={onExpand}>
           <ExpandMoreIcon />

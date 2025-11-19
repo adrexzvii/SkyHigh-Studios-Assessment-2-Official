@@ -1,11 +1,11 @@
 /**
  * PoiListItem - Individual POI list item component
- * 
+ *
  * Renders a single clickable POI item with:
  * - POI title as primary text
  * - Formatted coordinates as secondary text
  * - Hover effect with accent color
- * 
+ *
  * @component
  * @param {Object} props
  * @param {Object} props.poi - POI object containing title, lat, and lon

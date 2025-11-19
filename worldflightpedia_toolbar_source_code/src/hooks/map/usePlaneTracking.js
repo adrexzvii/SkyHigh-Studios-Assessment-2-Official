@@ -33,14 +33,22 @@ import { useEffect } from "react";
  * Side-effect hook; does not return data. Updates marker & map every interval.
  * @returns {void}
  */
-export function usePlaneTracking({ mapRef, planeMarkerRef, followRef, intervalMs = 1000 }) {
+export function usePlaneTracking({
+  mapRef,
+  planeMarkerRef,
+  followRef,
+  intervalMs = 1000,
+}) {
   useEffect(() => {
     const interval = setInterval(() => {
       try {
         // Read plane data from MSFS SimVars
         const lat = SimVar.GetSimVarValue("PLANE LATITUDE", "degrees");
         const lon = SimVar.GetSimVarValue("PLANE LONGITUDE", "degrees");
-        const hdg = SimVar.GetSimVarValue("PLANE HEADING DEGREES TRUE", "degrees");
+        const hdg = SimVar.GetSimVarValue(
+          "PLANE HEADING DEGREES TRUE",
+          "degrees"
+        );
 
         if (typeof lat === "number" && typeof lon === "number") {
           const marker = planeMarkerRef?.current;
@@ -58,7 +66,8 @@ export function usePlaneTracking({ mapRef, planeMarkerRef, followRef, intervalMs
             const el = marker.getElement?.();
             if (el) {
               const svg = el.querySelector(".plane-svg");
-              if (svg && typeof hdg === "number") svg.style.transform = `rotate(${hdg}deg)`;
+              if (svg && typeof hdg === "number")
+                svg.style.transform = `rotate(${hdg}deg)`;
             }
           }
         }

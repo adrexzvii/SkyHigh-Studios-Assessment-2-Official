@@ -27,7 +27,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import L from "leaflet";
-import { nearestNeighborOrder, normalizePois } from "../../utils/geo/routeUtils";
+import {
+  nearestNeighborOrder,
+  normalizePois,
+} from "../../utils/geo/routeUtils";
 import { haversine } from "../../utils/geo/haversine";
 
 /**
@@ -48,7 +51,7 @@ export function useRoutePlanning({
   onArrive,
   onRouteComplete,
   pauseRef,
-  updatePauseButtonRef
+  updatePauseButtonRef,
 }) {
   const [remainingPois, setRemainingPois] = useState([]);
   const [orderedRoute, setOrderedRoute] = useState([]);
@@ -77,11 +80,11 @@ export function useRoutePlanning({
     console.log("[useRoutePlanning] Normalized POIs:", valid.length);
     setRemainingPois(valid);
     setCompletedSegments([]);
-    
+
     // Step 2: Clear all previous state and layers
     if (visitedIdsRef.current) visitedIdsRef.current.clear();
     if (currentSegmentLineRef.current) currentSegmentLineRef.current = null;
-    
+
     // Clear all layer groups
     if (currentSegmentGroupRef.current) {
       currentSegmentGroupRef.current.clearLayers();
@@ -109,11 +112,22 @@ export function useRoutePlanning({
     if (planeLatLng) {
       startLat = planeLatLng.lat;
       startLon = planeLatLng.lng;
-      console.log("[useRoutePlanning] Start from plane marker:", startLat, startLon);
-    } else if (typeof userCoords.lat === 'number' && typeof userCoords.lon === 'number') {
+      console.log(
+        "[useRoutePlanning] Start from plane marker:",
+        startLat,
+        startLon
+      );
+    } else if (
+      typeof userCoords.lat === "number" &&
+      typeof userCoords.lon === "number"
+    ) {
       startLat = userCoords.lat;
       startLon = userCoords.lon;
-      console.log("[useRoutePlanning] Start from userCoords:", startLat, startLon);
+      console.log(
+        "[useRoutePlanning] Start from userCoords:",
+        startLat,
+        startLon
+      );
     } else {
       console.log("[useRoutePlanning] No valid starting position");
       setOrderedRoute([]);
@@ -124,7 +138,11 @@ export function useRoutePlanning({
 
     // Step 5: Compute ordered route
     const ordered = nearestNeighborOrder(start, valid);
-    console.log("[useRoutePlanning] Ordered route computed:", ordered.length, "POIs");
+    console.log(
+      "[useRoutePlanning] Ordered route computed:",
+      ordered.length,
+      "POIs"
+    );
     setOrderedRoute(ordered);
 
     // Step 6: Ensure layer groups exist
@@ -145,39 +163,57 @@ export function useRoutePlanning({
     try {
       if (ordered.length >= 1 && startRef.current) {
         // Active segment: start -> first POI
-        const activeSeg = L.polyline([[startRef.current.lat, startRef.current.lon], [ordered[0].lat, ordered[0].lon]], {
-          color: "#00E46A",
-          weight: 4,
-          opacity: 0.9,
-          smoothFactor: 1,
-          dashArray: '10, 5',
-          interactive: false,
-          pane: 'overlayPane'
-        });
+        const activeSeg = L.polyline(
+          [
+            [startRef.current.lat, startRef.current.lon],
+            [ordered[0].lat, ordered[0].lon],
+          ],
+          {
+            color: "#00E46A",
+            weight: 4,
+            opacity: 0.9,
+            smoothFactor: 1,
+            dashArray: "10, 5",
+            interactive: false,
+            pane: "overlayPane",
+          }
+        );
         activeSeg.addTo(map);
         staticSegmentsGroupRef.current.addLayer(activeSeg);
       }
 
       if (ordered.length > 1) {
-        console.log("[useRoutePlanning] Drawing", ordered.length - 1, "static future segments");
+        console.log(
+          "[useRoutePlanning] Drawing",
+          ordered.length - 1,
+          "static future segments"
+        );
         for (let i = 0; i < ordered.length - 1; i++) {
           const from = ordered[i];
           const to = ordered[i + 1];
-          const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
-            color: "#006b4a",
-            weight: 5,
-            opacity: 0.8,
-            smoothFactor: 1,
-            dashArray: '10, 10',
-            interactive: false,
-            pane: 'overlayPane'
-          });
+          const seg = L.polyline(
+            [
+              [from.lat, from.lon],
+              [to.lat, to.lon],
+            ],
+            {
+              color: "#006b4a",
+              weight: 5,
+              opacity: 0.8,
+              smoothFactor: 1,
+              dashArray: "10, 10",
+              interactive: false,
+              pane: "overlayPane",
+            }
+          );
           seg.addTo(map);
           staticSegmentsGroupRef.current.addLayer(seg);
         }
         console.log("[useRoutePlanning] Static segments drawn successfully");
       } else {
-        console.log("[useRoutePlanning] Not enough POIs for future segments (need at least 2)");
+        console.log(
+          "[useRoutePlanning] Not enough POIs for future segments (need at least 2)"
+        );
       }
     } catch (err) {
       console.error("[useRoutePlanning] Error drawing static segments:", err);
@@ -185,7 +221,10 @@ export function useRoutePlanning({
 
     // Step 8: Fit map bounds to show entire route
     try {
-      const coords = [[start.lat, start.lon], ...ordered.map(p => [p.lat, p.lon])];
+      const coords = [
+        [start.lat, start.lon],
+        ...ordered.map((p) => [p.lat, p.lon]),
+      ];
       const bounds = L.latLngBounds(coords);
       map.fitBounds(bounds, { padding: [60, 60] });
       console.log("[useRoutePlanning] Map bounds fitted");
@@ -227,7 +266,9 @@ export function useRoutePlanning({
       if (!currentSegmentGroupRef.current) {
         try {
           currentSegmentGroupRef.current = L.layerGroup().addTo(map);
-        } catch (_) { currentSegmentGroupRef.current = null; }
+        } catch (_) {
+          currentSegmentGroupRef.current = null;
+        }
       }
 
       // Static-only mode: we do NOT update the plane->POI line every tick.
@@ -238,33 +279,56 @@ export function useRoutePlanning({
       // Check Start Flight (L:WFP_StartFlight); if not active, stop tracking UI
       let flightTrackingActive = false;
       try {
-        if (typeof SimVar?.GetSimVarValue === 'function') {
+        if (typeof SimVar?.GetSimVarValue === "function") {
           const rawValue = SimVar.GetSimVarValue("L:WFP_StartFlight", "Bool");
           flightTrackingActive = rawValue === 1;
-          console.log(`[useRoutePlanning Loop] L:WFP_StartFlight raw: ${rawValue}, active: ${flightTrackingActive}`);
+          console.log(
+            `[useRoutePlanning Loop] L:WFP_StartFlight raw: ${rawValue}, active: ${flightTrackingActive}`
+          );
         } else {
           // In development environments where SimVar is not available assume active
-          console.warn("[useRoutePlanning Loop] SimVar.GetSimVarValue not available - assuming active for dev");
+          console.warn(
+            "[useRoutePlanning Loop] SimVar.GetSimVarValue not available - assuming active for dev"
+          );
           flightTrackingActive = true;
         }
       } catch (e) {
-        console.error("[useRoutePlanning Loop] Error reading L:WFP_StartFlight:", e);
+        console.error(
+          "[useRoutePlanning Loop] Error reading L:WFP_StartFlight:",
+          e
+        );
       }
 
       if (!flightTrackingActive) {
-        console.log("[useRoutePlanning Loop] Flight tracking INACTIVE - skipping update");
+        console.log(
+          "[useRoutePlanning Loop] Flight tracking INACTIVE - skipping update"
+        );
         if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
-          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+          try {
+            currentSegmentGroupRef.current.removeLayer(
+              currentSegmentLineRef.current
+            );
+          } catch (_) {}
           currentSegmentLineRef.current = null;
         }
         return;
       }
 
-      console.log("[useRoutePlanning Loop] Flight tracking ACTIVE - processing route (static highlight only)");
+      console.log(
+        "[useRoutePlanning Loop] Flight tracking ACTIVE - processing route (static highlight only)"
+      );
 
       // Arrival detection
-      const distKm = haversine(planeLatLng.lat, planeLatLng.lng, target.lat, target.lon);
-      if (distKm <= arrivalThresholdKm && !visitedIdsRef.current.has(target.id)) {
+      const distKm = haversine(
+        planeLatLng.lat,
+        planeLatLng.lng,
+        target.lat,
+        target.lon
+      );
+      if (
+        distKm <= arrivalThresholdKm &&
+        !visitedIdsRef.current.has(target.id)
+      ) {
         visitedIdsRef.current.add(target.id);
 
         const planePos = marker.getLatLng();
@@ -274,7 +338,9 @@ export function useRoutePlanning({
         try {
           SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 1);
           setTimeout(() => {
-            try { SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 0); } catch (_) {}
+            try {
+              SimVar.SetSimVarValue("L:WFP_NextPoi", "Bool", 0);
+            } catch (_) {}
           }, 1000);
         } catch (e) {
           console.warn("[useRoutePlanning] Error setting L:WFP_NextPoi", e);
@@ -284,51 +350,81 @@ export function useRoutePlanning({
         try {
           let startActive = false;
           try {
-            if (typeof SimVar?.GetSimVarValue === 'function') {
-              const rawValue = SimVar.GetSimVarValue("L:WFP_StartFlight", "Bool");
+            if (typeof SimVar?.GetSimVarValue === "function") {
+              const rawValue = SimVar.GetSimVarValue(
+                "L:WFP_StartFlight",
+                "Bool"
+              );
               startActive = rawValue === 1;
-              console.log(`[useRoutePlanning Arrival] L:WFP_StartFlight raw: ${rawValue}, active: ${startActive}`);
+              console.log(
+                `[useRoutePlanning Arrival] L:WFP_StartFlight raw: ${rawValue}, active: ${startActive}`
+              );
             } else {
-              console.warn("[useRoutePlanning Arrival] SimVar.GetSimVarValue not available");
+              console.warn(
+                "[useRoutePlanning Arrival] SimVar.GetSimVarValue not available"
+              );
             }
           } catch (e) {
-            console.error("[useRoutePlanning Arrival] Error reading L:WFP_StartFlight:", e);
+            console.error(
+              "[useRoutePlanning Arrival] Error reading L:WFP_StartFlight:",
+              e
+            );
           }
 
           if (startActive) {
             console.log("[useRoutePlanning Arrival] Triggering auto-pause");
-            if (typeof SimVar?.SetSimVarValue === 'function') {
+            if (typeof SimVar?.SetSimVarValue === "function") {
               SimVar.SetSimVarValue("K:PAUSE_SET", "Bool", 1);
               console.log("[useRoutePlanning Arrival]  K:PAUSE_SET sent");
             }
             if (pauseRef) pauseRef.current = true;
-            if (typeof updatePauseButtonRef?.current === 'function') {
-              try { updatePauseButtonRef.current(); } catch (_) {}
+            if (typeof updatePauseButtonRef?.current === "function") {
+              try {
+                updatePauseButtonRef.current();
+              } catch (_) {}
             }
             // Attempt to open the POI popup in the map UI if available
             try {
-              if (typeof window !== 'undefined' && typeof window.__openPoiPopup === 'function') {
+              if (
+                typeof window !== "undefined" &&
+                typeof window.__openPoiPopup === "function"
+              ) {
                 try {
                   // Open immediately
                   window.__openPoiPopup(target);
                 } catch (e) {
-                  console.warn('[useRoutePlanning] window.__openPoiPopup threw on immediate call', e);
+                  console.warn(
+                    "[useRoutePlanning] window.__openPoiPopup threw on immediate call",
+                    e
+                  );
                 }
 
                 // Open again after 1 second to ensure popup reliably appears
                 try {
                   setTimeout(() => {
-                    try { window.__openPoiPopup(target); } catch (e) { console.warn('[useRoutePlanning] window.__openPoiPopup threw on delayed call', e); }
+                    try {
+                      window.__openPoiPopup(target);
+                    } catch (e) {
+                      console.warn(
+                        "[useRoutePlanning] window.__openPoiPopup threw on delayed call",
+                        e
+                      );
+                    }
                   }, 1000);
                 } catch (e) {
-                  console.warn('[useRoutePlanning] Failed to schedule delayed openPoiPopup', e);
+                  console.warn(
+                    "[useRoutePlanning] Failed to schedule delayed openPoiPopup",
+                    e
+                  );
                 }
               }
             } catch (e) {
-              console.warn('[useRoutePlanning] Error calling openPoiPopup', e);
+              console.warn("[useRoutePlanning] Error calling openPoiPopup", e);
             }
           } else {
-            console.log("[useRoutePlanning Arrival]  Auto-pause skipped - Start Flight not active");
+            console.log(
+              "[useRoutePlanning Arrival]  Auto-pause skipped - Start Flight not active"
+            );
           }
         } catch (e) {
           console.warn("[useRoutePlanning] Error auto-pausing on arrival", e);
@@ -339,12 +435,16 @@ export function useRoutePlanning({
         // Update route mirror immediately so the drawing code below uses the
         // route without the POI we just reached. This ensures the new active
         // segment is computed from the *next* POI onward.
-        const updatedRoute = route.filter(p => p.id !== target.id);
+        const updatedRoute = route.filter((p) => p.id !== target.id);
         routeMirrorRef.current = updatedRoute;
 
         // Clear dynamic current line so we can rebuild active static highlight
         if (currentSegmentLineRef.current && currentSegmentGroupRef.current) {
-          try { currentSegmentGroupRef.current.removeLayer(currentSegmentLineRef.current); } catch (_) {}
+          try {
+            currentSegmentGroupRef.current.removeLayer(
+              currentSegmentLineRef.current
+            );
+          } catch (_) {}
           currentSegmentLineRef.current = null;
         }
 
@@ -355,15 +455,21 @@ export function useRoutePlanning({
           // Active segment becomes: plane -> updatedRoute[0]
           if (updatedRoute.length >= 1) {
             const planePos = marker.getLatLng();
-            const activeSeg = L.polyline([[planePos.lat, planePos.lng], [updatedRoute[0].lat, updatedRoute[0].lon]], {
-              color: "#00E46A",
-              weight: 4,
-              opacity: 0.9,
-              smoothFactor: 1,
-              dashArray: '10, 5',
-              interactive: false,
-              pane: 'overlayPane'
-            });
+            const activeSeg = L.polyline(
+              [
+                [planePos.lat, planePos.lng],
+                [updatedRoute[0].lat, updatedRoute[0].lon],
+              ],
+              {
+                color: "#00E46A",
+                weight: 4,
+                opacity: 0.9,
+                smoothFactor: 1,
+                dashArray: "10, 5",
+                interactive: false,
+                pane: "overlayPane",
+              }
+            );
             staticSegmentsGroupRef.current.addLayer(activeSeg);
           }
 
@@ -372,33 +478,56 @@ export function useRoutePlanning({
             for (let i = 0; i < updatedRoute.length - 1; i++) {
               const from = updatedRoute[i];
               const to = updatedRoute[i + 1];
-              const seg = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {
-                color: "#006b4a",
-                weight: 5,
-                opacity: 0.8,
-                smoothFactor: 1,
-                dashArray: '10, 10',
-                interactive: false,
-                pane: 'overlayPane'
-              });
+              const seg = L.polyline(
+                [
+                  [from.lat, from.lon],
+                  [to.lat, to.lon],
+                ],
+                {
+                  color: "#006b4a",
+                  weight: 5,
+                  opacity: 0.8,
+                  smoothFactor: 1,
+                  dashArray: "10, 10",
+                  interactive: false,
+                  pane: "overlayPane",
+                }
+              );
               staticSegmentsGroupRef.current.addLayer(seg);
             }
           }
         }
 
-        setCompletedSegments(prev => [...prev, { from: [planePos.lat, planePos.lng], to: targetPos }]);
-        setRemainingPois(prev => prev.filter(p => p.id !== target.id));
-        console.log("[useRoutePlanning] Route updated, remaining POIs:", routeMirrorRef.current.length);
+        setCompletedSegments((prev) => [
+          ...prev,
+          { from: [planePos.lat, planePos.lng], to: targetPos },
+        ]);
+        setRemainingPois((prev) => prev.filter((p) => p.id !== target.id));
+        console.log(
+          "[useRoutePlanning] Route updated, remaining POIs:",
+          routeMirrorRef.current.length
+        );
 
         // If no more POIs remain, notify consumer that the ordered route is complete
         try {
-          const updatedLength = Array.isArray(routeMirrorRef.current) ? routeMirrorRef.current.length : 0;
+          const updatedLength = Array.isArray(routeMirrorRef.current)
+            ? routeMirrorRef.current.length
+            : 0;
           if (updatedLength === 0) {
-            console.log("[useRoutePlanning] Ordered route completed -> calling onRouteComplete");
-            try { if (typeof onRouteComplete === 'function') onRouteComplete(); } catch (e) { console.warn('[useRoutePlanning] onRouteComplete threw', e); }
+            console.log(
+              "[useRoutePlanning] Ordered route completed -> calling onRouteComplete"
+            );
+            try {
+              if (typeof onRouteComplete === "function") onRouteComplete();
+            } catch (e) {
+              console.warn("[useRoutePlanning] onRouteComplete threw", e);
+            }
           }
         } catch (e) {
-          console.warn('[useRoutePlanning] Error while checking route completion', e);
+          console.warn(
+            "[useRoutePlanning] Error while checking route completion",
+            e
+          );
         }
 
         onArrive?.(target);

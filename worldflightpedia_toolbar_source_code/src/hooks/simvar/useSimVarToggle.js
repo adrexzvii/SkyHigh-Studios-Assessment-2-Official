@@ -21,7 +21,9 @@ export function useSimVarToggle(varName) {
   const normalized = stripped.toLowerCase();
   const whitelist = new Set(["spawnalllasersred", "wfp_startflight"]);
   const shouldPersist = whitelist.has(normalized);
-  const lsKey = shouldPersist ? `wfp_btn_${normalized.replace(/[^a-z0-9]/gi, "_")}` : null;
+  const lsKey = shouldPersist
+    ? `wfp_btn_${normalized.replace(/[^a-z0-9]/gi, "_")}`
+    : null;
 
   // Local UI state mirrors desired boolean value of the SimVar.
   // If persistence is enabled for this var, attempt to load saved state.
