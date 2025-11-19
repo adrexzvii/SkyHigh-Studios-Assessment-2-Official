@@ -61,7 +61,7 @@ module.exports = override(
             from: path.resolve(__dirname, "src/media"), // source folder
             to: "static/media/[name][ext]",             // keeps original name
             globOptions: {
-              ignore: ["**/*.{png,jpg,jpeg,gif,svg}"], // optional: ignore images
+              ignore: ["**/*.{jpg,jpeg,gif,svg}"], // optional: ignore images
             },
           },
         ],

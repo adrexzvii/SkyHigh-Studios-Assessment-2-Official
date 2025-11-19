@@ -19,6 +19,20 @@ if (typeof globalThis === "undefined") {
   window.globalThis = window;
 }
 
+// Provide a default COUI help image path used by MSFS/CoherentGT.
+// When the UI is hosted inside MSFS, assets are often exposed under the
+// `coui://html_ui/...` namespace. If the hosting environment (or a bootstrap
+// script) already sets `window.__COUI_HELP_IMAGE`, we respect that. Otherwise
+// set a sensible default that points to the packaged asset path the project
+// uses: `coui://html_ui/InGamePanels/worldflightpedia-toolbar/media/help_worldflightpedia.png`.
+try {
+  if (typeof window !== 'undefined' && !window.__COUI_HELP_IMAGE) {
+    window.__COUI_HELP_IMAGE = 'coui://html_ui/InGamePanels/worldflightpedia-toolbar/media/help_worldflightpedia.png';
+  }
+} catch (e) {
+  // ignore errors in non-browser environments
+}
+
 // Create React root and render application
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

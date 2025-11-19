@@ -2,8 +2,8 @@
   "files": {
     "main.css": "/static/css/worldFlightPedia.css",
     "main.js": "/static/js/worldFlightPedia.js",
+    "static/media/help_worldflightpedia.png": "/static/media/help_worldflightpedia.png",
     "worldFlightPedia.html": "/worldFlightPedia.html",
-    "static/media/config.json": "/static/media/config.json",
     "worldFlightPedia.css.map": "/static/css/worldFlightPedia.css.map",
     "worldFlightPedia.js.map": "/static/js/worldFlightPedia.js.map"
   },
