@@ -12,7 +12,7 @@
         defaultHeight="65px"
         defaultTop="10px"
         defaultRight="50px"
-        icon="ICON_TOOLBAR"
+        icon="ICON_TOOLBAR_WFP"
         buttonVisible="true"
     >
     </InGamePanels.InGamePanelDefinition>

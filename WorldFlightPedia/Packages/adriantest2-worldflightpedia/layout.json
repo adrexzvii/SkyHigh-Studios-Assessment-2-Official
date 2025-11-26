@@ -3,7 +3,7 @@
     {
       "path": "ContentInfo/adriantest2-worldflightpedia/ContentHistory.json",
       "size": 67,
-      "date": 134086625443383545
+      "date": 134086663092906412
     },
     {
       "path": "ContentInfo/adriantest2-worldflightpedia/Thumbnail.jpg",
@@ -11,7 +11,7 @@
       "date": 133864020540174673
     },
     {
-      "path": "html_ui/icons/toolbar/ICON_TOOLBAR.svg",
+      "path": "html_ui/icons/toolbar/ICON_TOOLBAR_WFP.svg",
       "size": 900,
       "date": 134086624479251712
     },
@@ -37,8 +37,8 @@
     },
     {
       "path": "InGamePanels/worldflightpedia-toolbar.spb",
-      "size": 691,
-      "date": 134086625442509086
+      "size": 695,
+      "date": 134086663092429604
     },
     {
       "path": "modules/worldFlightPedia_wasm_module.wasm",
@@ -48,17 +48,17 @@
     {
       "path": "Scenery/worldflightpedia/worldflightpedia-cochabamba-poi-test-placement/worldflightpedia-cochabamba-poi-test-placement.bgl",
       "size": 56,
-      "date": 134086625442752277
+      "date": 134086663092589550
     },
     {
       "path": "SimObjects/Landmarks/cube/model/Cube.bin",
       "size": 936,
-      "date": 134086625442906197
+      "date": 134086663092589550
     },
     {
       "path": "SimObjects/Landmarks/cube/model/Cube.gltf",
       "size": 2100,
-      "date": 134086625442906197
+      "date": 134086663092589550
     },
     {
       "path": "SimObjects/Landmarks/cube/model/Cube.xml",
@@ -88,12 +88,12 @@
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.bin",
       "size": 7656,
-      "date": 134086625443180001
+      "date": 134086663092749011
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.gltf",
       "size": 3921,
-      "date": 134086625443180001
+      "date": 134086663092749011
     },
     {
       "path": "SimObjects/Landmarks/worldflightpedia_laser_red/model/Lasers.xml",
