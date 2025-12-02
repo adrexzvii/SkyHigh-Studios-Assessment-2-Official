@@ -483,6 +483,8 @@ The source code for the in-game toolbar UI, built with React + Leaflet + Coheren
 
 - `cd worldflightpedia_toolbar_source_code`
 - `npm install` install all react and libraries dependencies.
+- `npm install copy-webpack-plugin css-loader customize-cra eslint-plugin-react-hooks file-loader mini-css-extract-plugin postcss-loader react-app-rewired leaflet react-leaflet @mui/material @mui/icons-material @emotion/react @emotion/styled`
+
 - `npm run build` generates a production bundle under `dist/`.
 
 That bundle is copied into `WorldFlightPedia/PackageSources/html_ui/` for packaging.
